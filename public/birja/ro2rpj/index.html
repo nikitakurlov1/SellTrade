@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SellBit</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="app-title">SellBit</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn notification-btn">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <div class="user-avatar" id="userAvatar">U</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Balance Section -->
+            <section class="balance-section">
+                <div class="balance-card">
+                    <div class="balance-header">
+                        <span class="balance-label">Общий баланс</span>
+                        <button class="icon-btn eye-btn">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="balance-amount" id="totalBalance">$0.00</div>
+                    <div class="balance-change" id="balanceChange">
+                        <i class="fas fa-minus"></i>
+                        $0.00 (0.00%)
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn primary" onclick="openDepositModal()">
+                        <i class="fas fa-plus"></i>
+                        Пополнить
+                    </button>
+                    <button class="action-btn secondary" onclick="openWithdrawModal()">
+                        <i class="fas fa-arrow-up"></i>
+                        Вывести
+                    </button>
+                </div>
+            </section>
+
+            <!-- Quick Stats -->
+            <section class="stats-section">
+                <div class="main-stats-center">
+                    <div class="stat-block">
+                        <div class="stat-value" id="monthlyChange">0.00%</div>
+                        <div class="stat-label">За месяц</div>
+                    </div>
+                    <div class="stat-block">
+                        <div class="stat-value" id="assetsCount">0</div>
+                        <div class="stat-label">Активов</div>
+                    </div>
+                    <div class="stat-block">
+                        <div class="stat-value" id="activeStakes">0</div>
+                        <div class="stat-label">Активных ставок</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Top Assets -->
+            <section class="assets-section">
+                <div class="section-header">
+                    <h2 id="assetsSectionTitle">Мои активы</h2>
+                    <button class="text-btn" onclick="window.location.href='coins.html'">Все активы</button>
+                </div>
+                <div class="assets-list" id="topAssets">
+                    <!-- Assets will be loaded dynamically -->
+                </div>
+            </section>
+
+            <!-- Recent Transactions -->
+            <section class="transactions-section">
+                <div class="section-header">
+                    <h2>Последние операции</h2>
+                    <button class="text-btn" onclick="window.location.href='transactions.html'">Все операции</button>
+                </div>
+                <div class="transactions-list" id="recentTransactions">
+                    <!-- Transactions will be loaded dynamically -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" data-page="coins">
+                <i class="fas fa-coins"></i>
+                <span>Монеты</span>
+            </button>
+            <button class="nav-btn" data-page="portfolio">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+            <button class="nav-btn" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div class="modal" id="depositModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Пополнить баланс</h3>
+                <button class="icon-btn" onclick="closeModal('depositModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="depositForm">
+                    <div class="form-group">
+                        <label>Сумма (USD)</label>
+                        <input type="number" id="depositAmount" placeholder="0.00" min="1" step="0.01" required>
+                    </div>
+                    <button type="submit" class="trade-btn primary">Пополнить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal" id="withdrawModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Вывести средства</h3>
+                <button class="icon-btn" onclick="closeModal('withdrawModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="withdrawForm">
+                    <div class="form-group">
+                        <label>Сумма (USD)</label>
+                        <input type="number" id="withdrawAmount" placeholder="0.00" min="1" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Максимум доступно: <span id="maxWithdraw">$0.00</span></label>
+                    </div>
+                    <button type="submit" class="trade-btn primary">Вывести</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="exchange-api.js"></script>
+    <script src="account.js"></script>
+    <script src="balance.js"></script>
+    <script src="operations.js"></script>
+    <script src="portfolio.js"></script>
+    <script src="history.js"></script>
+    <script src="earnings.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Инициализация главной страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            // Устанавливаем текущую страницу
+            window.currentPage = 'index';
+            
+            // Проверяем авторизацию
+            if (!window.exchangeAPI.isAuthenticated()) {
+                // Если нет токена, перенаправляем на главную страницу CRM
+                window.location.href = '/';
+                return;
+            }
+            
+            initializeApp();
+            initializeNavigation();
+            loadDashboardData();
+            
+            // Инициализируем обработчики кнопок
+            initializePageButtonHandlers();
+            
+
+            
+            // Обновляем данные каждые 10 секунд
+            setInterval(loadDashboardData, 10000);
+        });
+
+        // Инициализация обработчиков кнопок для главной страницы
+        function initializePageButtonHandlers() {
+            // Кнопки действий в карточке баланса
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.dataset.action;
+                    handleBalanceAction(action);
+                });
+            });
+
+            // Кнопки в карточках активов
+            document.querySelectorAll('.asset-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const assetId = this.dataset.asset;
+                    if (assetId) {
+                        window.location.href = `asset-details.html?asset=${assetId}`;
+                    }
+                });
+            });
+
+            // Кнопки в транзакциях
+            document.querySelectorAll('.transaction-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const transactionId = this.dataset.id;
+                    if (transactionId) {
+                        openTransactionDetails(transactionId);
+                    }
+                });
+            });
+
+            // Кнопки в статистике
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const statType = this.dataset.type;
+                    if (statType) {
+                        openStatDetails(statType);
+                    }
+                });
+            });
+
+            // Кнопки в заголовке
+            document.querySelectorAll('.header .icon-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.dataset.action;
+                    handleHeaderAction(action);
+                });
+            });
+        }
+
+        // Обработчики действий с балансом
+        function handleBalanceAction(action) {
+            switch (action) {
+                case 'deposit':
+                    openDepositModal();
+                    break;
+                case 'withdraw':
+                    openWithdrawModal();
+                    break;
+
+                default:
+                    console.log('Неизвестное действие:', action);
+            }
+        }
+
+        // Обработчики действий в заголовке
+        function handleHeaderAction(action) {
+            switch (action) {
+                case 'notifications':
+                    openNotificationsModal();
+                    break;
+                case 'profile':
+                    openProfileModal();
+                    break;
+                case 'settings':
+                    window.location.href = 'settings.html';
+                    break;
+                default:
+                    console.log('Неизвестное действие в заголовке:', action);
+            }
+        }
+
+        // Открытие деталей транзакции
+        function openTransactionDetails(transactionId) {
+            // Здесь можно открыть модальное окно с деталями транзакции
+            console.log('Открытие деталей транзакции:', transactionId);
+            showToast('Информация', 'Детали транзакции будут доступны в ближайшее время', 'info');
+        }
+
+        // Открытие деталей статистики
+        function openStatDetails(statType) {
+            // Здесь можно открыть модальное окно с деталями статистики
+            console.log('Открытие деталей статистики:', statType);
+            showToast('Информация', 'Детальная статистика будет доступна в ближайшее время', 'info');
+        }
+
+        async function initializeApp() {
+            try {
+                // Получаем данные пользователя из CRM
+                const userProfile = await window.exchangeAPI.getUserProfile();
+                const balance = await window.exchangeAPI.getBalance();
+                
+                const user = {
+                    id: userProfile.id,
+                    name: userProfile.username,
+                    email: userProfile.email,
+                    balance: balance.USD
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                updateUserAvatar();
+            } catch (error) {
+                console.error('Ошибка инициализации приложения:', error);
+                showToast('Ошибка', 'Не удалось загрузить данные пользователя', 'error');
+            }
+        }
+
+        function updateUserAvatar() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            const avatar = document.getElementById('userAvatar');
+            if (user && avatar) {
+                avatar.textContent = user.name.charAt(0).toUpperCase();
+            }
+        }
+
+        function initializeNavigation() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const page = button.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+        async function loadDashboardData() {
+            try {
+                await loadBalance();
+                await loadTopAssets();
+                await loadRecentTransactions();
+                await updateStats();
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+            }
+        }
+
+        async function loadBalance() {
+            try {
+                const balance = await window.exchangeAPI.getBalance();
+                const portfolio = await window.exchangeAPI.getPortfolio();
+                const balanceElement = document.getElementById('totalBalance');
+                const changeElement = document.getElementById('balanceChange');
+                
+                // Рассчитываем общий баланс (USD + стоимость всех активов)
+                const totalValue = balance.USD + portfolio.totalValue;
+                
+                if (balanceElement) {
+                    balanceElement.textContent = window.exchangeAPI.formatCurrency(totalValue);
+                }
+                
+                if (changeElement) {
+                    // Рассчитываем изменение на основе прибыли портфеля
+                    const change = portfolio.totalProfit || 0;
+                    const changePercent = portfolio.totalInvested > 0 ? (change / portfolio.totalInvested) * 100 : 0;
+                    
+                    const icon = change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    const color = change >= 0 ? 'positive' : 'negative';
+                    
+                    changeElement.innerHTML = `<i class="fas ${icon}"></i> ${window.exchangeAPI.formatCurrency(Math.abs(change))} (${window.exchangeAPI.formatPercent(changePercent)})`;
+                    changeElement.className = `balance-change ${color}`;
+                }
+                
+                console.log('Balance updated:', { 
+                    usdBalance: balance.USD, 
+                    portfolioValue: portfolio.totalValue, 
+                    totalValue, 
+                    change, 
+                    changePercent 
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки баланса:', error);
+            }
+        }
+
+        async function loadTopAssets() {
+            try {
+                const coins = await window.exchangeAPI.getCoins();
+                const balance = await window.exchangeAPI.getBalance();
+                const portfolio = await window.exchangeAPI.getPortfolio();
+                
+                // Фильтруем только активы, которые есть у пользователя
+                const userAssets = coins.filter(asset => {
+                    const userBalance = balance[asset.symbol.toUpperCase()] || 0;
+                    return userBalance > 0;
+                });
+                
+                // Если у пользователя нет активов, показываем топ-3 популярных
+                const topAssets = userAssets.length > 0 ? userAssets.slice(0, 3) : coins.slice(0, 3);
+
+                const container = document.getElementById('topAssets');
+                const titleElement = document.getElementById('assetsSectionTitle');
+                
+                if (!container) return;
+
+                // Обновляем заголовок секции
+                if (titleElement) {
+                    titleElement.textContent = userAssets.length > 0 ? 'Мои активы' : 'Популярные активы';
+                }
+
+                if (userAssets.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-coins"></i>
+                            <p>У вас пока нет активов</p>
+                            <button class="btn-primary" onclick="window.location.href='coins.html'">Купить активы</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = topAssets.map(asset => {
+                    const userBalance = balance[asset.symbol.toUpperCase()] || 0;
+                    const icon = window.exchangeAPI.getCoinIcon(asset.symbol);
+                    const color = window.exchangeAPI.getCoinColor(asset.symbol);
+                    
+                    // Получаем данные о прибыли из портфеля
+                    const portfolioAsset = portfolio.assets[asset.symbol.toUpperCase()];
+                    const profitLoss = portfolioAsset ? portfolioAsset.profitLoss : 0;
+                    const profitLossPercent = portfolioAsset ? portfolioAsset.profitLossPercent : 0;
+                    
+                    return `
+                        <div class="asset-item" onclick="openAssetDetails('${asset.id}')">
+                            <div class="asset-info">
+                                <div class="asset-icon" style="background: ${color}">
+                                    <i class="${icon}"></i>
+                                </div>
+                                <div class="asset-details">
+                                    <div class="asset-name">${asset.name}</div>
+                                    <div class="asset-balance">${window.exchangeAPI.formatCrypto(userBalance)} ${asset.symbol}</div>
+                                </div>
+                            </div>
+                            <div class="asset-values">
+                                <div class="asset-price">${window.exchangeAPI.formatCurrency(asset.price)}</div>
+                                <div class="asset-change ${profitLoss >= 0 ? 'positive' : 'negative'}">
+                                    ${window.exchangeAPI.formatPercent(profitLossPercent)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки активов:', error);
+            }
+        }
+
+        async function loadRecentTransactions() {
+            try {
+                const transactions = await window.exchangeAPI.getTransactions(5);
+                const container = document.getElementById('recentTransactions');
+                if (!container) return;
+
+                if (transactions.length === 0) {
+                    container.innerHTML = '<div class="no-transactions">Нет транзакций</div>';
+                    return;
+                }
+
+                container.innerHTML = transactions.map(tx => {
+                    const icon = tx.type === 'buy' ? 'fa-arrow-up' : 'fa-arrow-down';
+                    const color = tx.type === 'buy' ? 'positive' : 'negative';
+                    const typeText = tx.type === 'buy' ? 'Покупка' : 'Продажа';
+                    const date = new Date(tx.timestamp).toLocaleDateString('ru-RU');
+                    
+                    return `
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-icon ${color}">
+                                    <i class="fas ${icon}"></i>
+                                </div>
+                                <div class="transaction-details">
+                                    <div class="transaction-type">${typeText}</div>
+                                    <div class="transaction-date">${date}</div>
+                                </div>
+                            </div>
+                            <div class="transaction-amount ${color}">
+                                ${tx.type === 'buy' ? '-' : '+'}${window.exchangeAPI.formatCurrency(tx.usdAmount)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки транзакций:', error);
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const portfolio = await window.exchangeAPI.getPortfolio();
+                const balance = await window.exchangeAPI.getBalance();
+                
+                // Рассчитываем месячное изменение на основе прибыли портфеля
+                const monthlyChange = portfolio.profitPercent || 0;
+                
+                // Количество активов с балансом > 0
+                const assetsCount = Object.keys(portfolio.assets).filter(symbol => {
+                    const asset = portfolio.assets[symbol];
+                    return asset && asset.amount > 0;
+                }).length;
+                
+                // Активные ставки (показываем 0, так как это не реализовано)
+                const activeStakes = 0;
+
+                // Обновляем отображение
+                const monthlyChangeEl = document.getElementById('monthlyChange');
+                const assetsCountEl = document.getElementById('assetsCount');
+                const activeStakesEl = document.getElementById('activeStakes');
+                
+                if (monthlyChangeEl) {
+                    monthlyChangeEl.textContent = window.exchangeAPI.formatPercent(monthlyChange);
+                    monthlyChangeEl.className = `stat-value ${monthlyChange >= 0 ? 'positive' : 'negative'}`;
+                }
+                
+                if (assetsCountEl) {
+                    assetsCountEl.textContent = assetsCount;
+                }
+                
+                if (activeStakesEl) {
+                    activeStakesEl.textContent = activeStakes;
+                }
+                
+                console.log('Stats updated:', { monthlyChange, assetsCount, activeStakes });
+            } catch (error) {
+                console.error('Ошибка обновления статистики:', error);
+            }
+        }
+
+        function openAssetDetails(assetId) {
+            window.location.href = `asset-details.html?asset=${assetId}`;
+        }
+
+        function openDepositModal() {
+            window.location.href = 'deposit.html';
+        }
+
+        function openWithdrawModal() {
+            showToast('Информация', 'Вывод невозможен. Обратитесь в техподдержку.', 'info');
+        }
+
+
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function navigateToPage(page) {
+            if (page === 'home') {
+                window.location.href = 'index.html';
+            } else if (page === 'coins') {
+                window.location.href = 'coins.html';
+            } else if (page === 'portfolio') {
+                window.location.href = 'portfolio.html';
+            } else if (page === 'settings') {
+                window.location.href = 'settings.html';
+            }
+        }
+
+        function formatCurrency(amount) {
+            if (amount >= 1000) {
+                return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else if (amount >= 1) {
+                return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+            } else {
+                return amount.toLocaleString('en-US', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+            }
+        }
+
+        // Функция для показа уведомлений
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>${title}</strong>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Автоматическое удаление через 5 секунд
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+        // Обработчики форм
+        document.getElementById('depositForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            
+            try {
+                // В реальном приложении здесь был бы API для пополнения
+                // Пока что просто обновляем локальный баланс
+                const balance = await window.exchangeAPI.getBalance();
+                balance.USD += amount;
+                
+                // Обновляем баланс в CRM (только для демо)
+                await window.exchangeAPI.updateUserBalance('current', balance);
+                
+                await loadBalance();
+                closeModal('depositModal');
+                showToast('Успех', `Баланс пополнен на ${window.exchangeAPI.formatCurrency(amount)}`, 'success');
+            } catch (error) {
+                console.error('Ошибка пополнения:', error);
+                showToast('Ошибка', 'Не удалось пополнить баланс', 'error');
+            }
+        });
+
+        document.getElementById('withdrawForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            
+            try {
+                const balance = await window.exchangeAPI.getBalance();
+                
+                if (amount > balance.USD) {
+                    showToast('Ошибка', 'Недостаточно средств', 'error');
+                    return;
+                }
+                
+                // В реальном приложении здесь был бы API для вывода
+                balance.USD -= amount;
+                
+                // Обновляем баланс в CRM (только для демо)
+                await window.exchangeAPI.updateUserBalance('current', balance);
+                
+                await loadBalance();
+                closeModal('withdrawModal');
+                showToast('Успех', `Выведено ${window.exchangeAPI.formatCurrency(amount)}`, 'success');
+            } catch (error) {
+                console.error('Ошибка вывода:', error);
+                showToast('Ошибка', 'Не удалось вывести средства', 'error');
+            }
+        });
+
+
+    </script>
+</body>
+
+</html>

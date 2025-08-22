@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История сделок - SellBit</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="icon-btn" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="app-title">История сделок</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="exportTransactions()">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Transaction Filters -->
+            <section class="transaction-filters">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">Все</button>
+                    <button class="filter-tab" data-filter="buy">Покупки</button>
+                    <button class="filter-tab" data-filter="sell">Продажи</button>
+                </div>
+            </section>
+
+            <!-- Transactions List -->
+            <section class="transactions-section">
+                <div class="transactions-list" id="transactionsList">
+                    <!-- Transactions will be loaded dynamically -->
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Загрузка транзакций...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Load More Button -->
+            <section class="load-more-section" id="loadMoreSection" style="display: none;">
+                <button class="btn-secondary" onclick="loadMoreTransactions()">
+                    <i class="fas fa-plus"></i>
+                    Загрузить еще
+                </button>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" data-page="coins">
+                <i class="fas fa-coins"></i>
+                <span>Монеты</span>
+            </button>
+            <button class="nav-btn" data-page="portfolio">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+            <button class="nav-btn" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="exchange-api.js"></script>
+    <script>
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let currentFilter = 'all';
+        let currentPage = 1;
+        let transactionsPerPage = 20;
+        let hasMoreTransactions = true;
+
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            // Проверяем авторизацию
+            if (!window.exchangeAPI.isAuthenticated()) {
+                window.location.href = '/';
+                return;
+            }
+
+            initializePage();
+            initializeFilters();
+            initializeNavigation();
+
+        });
+
+        async function initializePage() {
+            try {
+                await loadTransactions();
+                updateTransactionsDisplay();
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                showToast('Ошибка', 'Не удалось загрузить транзакции', 'error');
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const limit = currentPage * transactionsPerPage;
+                const transactions = await window.exchangeAPI.getTransactions(limit);
+                allTransactions = transactions;
+                
+                // Проверяем, есть ли еще транзакции
+                hasMoreTransactions = transactions.length >= limit;
+                
+                filterTransactions();
+            } catch (error) {
+                console.error('Ошибка загрузки транзакций:', error);
+                throw error;
+            }
+        }
+
+        function filterTransactions() {
+            if (currentFilter === 'all') {
+                filteredTransactions = allTransactions;
+            } else {
+                filteredTransactions = allTransactions.filter(t => t.type === currentFilter);
+            }
+        }
+
+        function updateTransactionsDisplay() {
+            const transactionsList = document.getElementById('transactionsList');
+            const loadMoreSection = document.getElementById('loadMoreSection');
+            
+            if (!transactionsList) return;
+
+            if (filteredTransactions.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>Нет транзакций</p>
+                        <small>${currentFilter === 'all' ? 'У вас пока нет сделок' : `Нет ${currentFilter === 'buy' ? 'покупок' : 'продаж'}`}</small>
+                    </div>
+                `;
+                loadMoreSection.style.display = 'none';
+                return;
+            }
+
+            // Группируем транзакции по дате
+            const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+            
+            transactionsList.innerHTML = groupedTransactions.map(group => `
+                <div class="transaction-group">
+                    <div class="transaction-date">${formatDateHeader(group.date)}</div>
+                    ${group.transactions.map(transaction => createTransactionHTML(transaction)).join('')}
+                </div>
+            `).join('');
+
+            // Показываем кнопку "Загрузить еще" только если есть фильтр "Все" и есть еще транзакции
+            loadMoreSection.style.display = (currentFilter === 'all' && hasMoreTransactions) ? 'block' : 'none';
+        }
+
+        function groupTransactionsByDate(transactions) {
+            const groups = {};
+            
+            transactions.forEach(transaction => {
+                const date = new Date(transaction.timestamp).toDateString();
+                if (!groups[date]) {
+                    groups[date] = {
+                        date: new Date(transaction.timestamp),
+                        transactions: []
+                    };
+                }
+                groups[date].transactions.push(transaction);
+            });
+
+            // Сортируем группы по дате (новые сначала)
+            return Object.values(groups).sort((a, b) => b.date - a.date);
+        }
+
+        function createTransactionHTML(transaction) {
+            const isBuy = transaction.type === 'buy';
+            const icon = isBuy ? 'fa-arrow-up' : 'fa-arrow-down';
+            const color = isBuy ? '#34c759' : '#ff3b30';
+            const typeText = isBuy ? 'Покупка' : 'Продажа';
+            
+            // Находим символ актива
+            const assetSymbol = getAssetSymbol(transaction.assetId);
+            
+            return `
+                <div class="transaction-item">
+                    <div class="transaction-icon" style="background: ${color}">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-type">${typeText} ${assetSymbol}</div>
+                        <div class="transaction-amount">${formatCrypto(transaction.amount)} ${assetSymbol}</div>
+                        <div class="transaction-time">${formatTime(transaction.timestamp)}</div>
+                    </div>
+                    <div class="transaction-value">
+                        <div class="value-amount">$${formatCurrency(transaction.usdAmount)}</div>
+                        <div class="transaction-price">@ $${formatCurrency(transaction.price)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getAssetSymbol(assetId) {
+            // В реальном приложении здесь нужно получать символ из API
+            // Пока используем ID как символ
+            return assetId.toUpperCase();
+        }
+
+        function initializeFilters() {
+            const filterTabs = document.querySelectorAll('.filter-tab');
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const filter = tab.dataset.filter;
+                    
+                    // Обновляем активную вкладку
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Применяем фильтр
+                    currentFilter = filter;
+                    filterTransactions();
+                    updateTransactionsDisplay();
+                });
+            });
+        }
+
+        async function loadMoreTransactions() {
+            try {
+                const loadMoreBtn = document.querySelector('#loadMoreSection .btn-secondary');
+                const originalText = loadMoreBtn.innerHTML;
+                loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+                loadMoreBtn.disabled = true;
+
+                currentPage++;
+                await loadTransactions();
+                updateTransactionsDisplay();
+                
+                showToast('Успех', 'Транзакции загружены', 'success');
+            } catch (error) {
+                console.error('Ошибка загрузки дополнительных транзакций:', error);
+                showToast('Ошибка', 'Не удалось загрузить транзакции', 'error');
+            } finally {
+                const loadMoreBtn = document.querySelector('#loadMoreSection .btn-secondary');
+                loadMoreBtn.innerHTML = originalText;
+                loadMoreBtn.disabled = false;
+            }
+        }
+
+        function initializeNavigation() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const page = button.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+        function navigateToPage(page) {
+            if (page === 'home') {
+                window.location.href = 'index.html';
+            } else if (page === 'coins') {
+                window.location.href = 'coins.html';
+            } else if (page === 'portfolio') {
+                window.location.href = 'portfolio.html';
+            } else if (page === 'settings') {
+                window.location.href = 'settings.html';
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        function exportTransactions() {
+            try {
+                const exportData = {
+                    transactions: filteredTransactions,
+                    filter: currentFilter,
+                    exportDate: new Date().toISOString(),
+                    totalCount: filteredTransactions.length
+                };
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `transactions_${currentFilter}_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                showToast('Успех', 'Транзакции экспортированы', 'success');
+            } catch (error) {
+                console.error('Ошибка экспорта:', error);
+                showToast('Ошибка', 'Не удалось экспортировать транзакции', 'error');
+            }
+        }
+
+        // Вспомогательные функции
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function formatCrypto(amount) {
+            return amount.toFixed(8);
+        }
+
+        function formatDateHeader(date) {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (date.toDateString() === today.toDateString()) {
+                return 'Сегодня';
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                return 'Вчера';
+            } else {
+                return date.toLocaleDateString('ru-RU', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long'
+                });
+            }
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>${title}</strong>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+
+    </script>
+</body>
+
+</html> 

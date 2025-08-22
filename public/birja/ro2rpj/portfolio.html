@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Портфель - SellBit</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="app-title">Портфель</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="exportPortfolio()">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Portfolio Overview -->
+            <section class="portfolio-overview">
+                <div class="portfolio-card">
+                    <div class="portfolio-header">
+                        <span class="portfolio-label">Общая стоимость</span>
+                    </div>
+                    <div class="portfolio-amount" id="totalPortfolioValue">$0.00</div>
+                    <div class="portfolio-change" id="portfolioChange">
+                        <i class="fas fa-minus"></i>
+                        $0.00 (0.00%)
+                    </div>
+                </div>
+            </section>
+
+            <!-- Portfolio Analytics -->
+            <section class="portfolio-analytics">
+                <div class="analytics-header">
+                    <h2>Аналитика портфеля</h2>
+                </div>
+                <div class="analytics-content">
+                    <div class="analytics-row">
+                        <div class="analytics-metric">
+                            <div class="metric-label">Всего активов</div>
+                            <div class="metric-value" id="totalAssets">0</div>
+                            <div class="metric-period">шт</div>
+                        </div>
+                        <div class="analytics-metric">
+                            <div class="metric-label">Общая прибыль</div>
+                            <div class="metric-value" id="totalProfit">$0.00</div>
+                            <div class="metric-period">USD</div>
+                        </div>
+                        <div class="analytics-metric">
+                            <div class="metric-label">Доступно</div>
+                            <div class="metric-value" id="availableBalance">$0.00</div>
+                            <div class="metric-period">USD</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Portfolio Assets -->
+            <section class="portfolio-assets">
+                <div class="section-header">
+                    <h2>Мои активы</h2>
+                    <div class="section-actions">
+                        <button class="btn-secondary" onclick="refreshPortfolio()">
+                            <i class="fas fa-sync-alt"></i>
+                            Обновить
+                        </button>
+                        <button class="btn-secondary" onclick="syncPortfolio()" title="Синхронизировать">
+                            <i class="fas fa-link"></i>
+                        </button>
+                        <button class="btn-secondary" onclick="debugPortfolio()" title="Отладка">
+                            <i class="fas fa-bug"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="assets-list" id="assetsList">
+                    <!-- Assets will be loaded dynamically -->
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Загрузка активов...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Transactions -->
+            <section class="recent-transactions">
+                <div class="section-header">
+                    <h2>Последние сделки</h2>
+                    <a href="transactions.html" class="btn-link">Все сделки</a>
+                </div>
+                <div class="transactions-list" id="transactionsList">
+                    <!-- Transactions will be loaded dynamically -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" data-page="coins">
+                <i class="fas fa-coins"></i>
+                <span>Монеты</span>
+            </button>
+            <button class="nav-btn active" data-page="portfolio">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+            <button class="nav-btn" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="exchange-api.js"></script>
+    <script>
+        let assets = [];
+        let userBalance = 0;
+        let userAssets = [];
+
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            // Проверяем авторизацию
+            if (!window.exchangeAPI.isAuthenticated()) {
+                window.location.href = '/';
+                return;
+            }
+
+            initializePage();
+            initializeNavigation();
+
+        });
+
+        async function initializePage() {
+            try {
+                // Сначала синхронизируем портфель с балансом
+                try {
+                    await window.exchangeAPI.syncPortfolio();
+                } catch (error) {
+                    console.warn('Ошибка синхронизации портфеля:', error);
+                }
+
+                // Загружаем данные
+                await Promise.all([
+                    loadAssets(),
+                    loadUserBalance(),
+                    loadUserAssets()
+                ]);
+
+                // Обновляем интерфейс
+                updatePortfolioDisplay();
+                loadRecentTransactions();
+
+                // Обновляем данные каждые 30 секунд
+                setInterval(updatePortfolioData, 30000);
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                showToast('Ошибка', 'Не удалось загрузить данные портфеля', 'error');
+            }
+        }
+
+        async function loadAssets() {
+            try {
+                assets = await window.exchangeAPI.getCoins();
+            } catch (error) {
+                console.error('Ошибка загрузки активов:', error);
+                throw error;
+            }
+        }
+
+        async function loadUserBalance() {
+            try {
+                const balance = await window.exchangeAPI.getBalance();
+                userBalance = balance.USD || 0;
+            } catch (error) {
+                console.error('Ошибка загрузки баланса:', error);
+                throw error;
+            }
+        }
+
+        async function loadUserAssets() {
+            try {
+                const portfolio = await window.exchangeAPI.getPortfolio();
+                console.log('Loaded portfolio:', portfolio);
+                
+                userAssets = Object.entries(portfolio.assets || {}).map(([symbol, data]) => ({
+                    symbol: symbol,
+                    amount: data.amount || 0,
+                    averagePrice: data.averagePrice || 0,
+                    totalInvested: data.totalInvested || 0,
+                    currentPrice: data.currentPrice || 0,
+                    currentValue: data.currentValue || 0,
+                    profitLoss: data.profitLoss || 0,
+                    profitLossPercent: data.profitLossPercent || 0
+                })).filter(asset => asset.amount > 0); // Фильтруем только активы с количеством > 0
+                
+                console.log('Processed user assets:', userAssets);
+            } catch (error) {
+                console.error('Ошибка загрузки активов пользователя:', error);
+                throw error;
+            }
+        }
+
+        function updatePortfolioDisplay() {
+            // Обновляем общую стоимость портфеля
+            const totalValue = userAssets.reduce((sum, asset) => sum + (asset.currentValue || 0), 0) + userBalance;
+            document.getElementById('totalPortfolioValue').textContent = `$${formatCurrency(totalValue)}`;
+
+            // Обновляем изменение портфеля
+            const totalInvested = userAssets.reduce((sum, asset) => sum + (asset.totalInvested || 0), 0);
+            const totalProfit = totalValue - totalInvested;
+            const profitPercent = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
+
+            const portfolioChangeEl = document.getElementById('portfolioChange');
+            if (totalProfit >= 0) {
+                portfolioChangeEl.innerHTML = `<i class="fas fa-arrow-up"></i> +$${formatCurrency(totalProfit)} (+${profitPercent.toFixed(2)}%)`;
+                portfolioChangeEl.className = 'portfolio-change positive';
+            } else {
+                portfolioChangeEl.innerHTML = `<i class="fas fa-arrow-down"></i> -$${formatCurrency(Math.abs(totalProfit))} (${profitPercent.toFixed(2)}%)`;
+                portfolioChangeEl.className = 'portfolio-change negative';
+            }
+
+            // Обновляем метрики
+            document.getElementById('totalAssets').textContent = userAssets.length;
+            document.getElementById('availableBalance').textContent = `$${formatCurrency(userBalance)}`;
+            document.getElementById('totalProfit').textContent = `$${formatCurrency(totalProfit)}`;
+
+            // Обновляем список активов
+            updateAssetsList();
+        }
+
+        function updateAssetsList() {
+            const assetsList = document.getElementById('assetsList');
+            if (!assetsList) return;
+
+            console.log('Updating assets list with:', userAssets);
+
+            if (userAssets.length === 0) {
+                assetsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-coins"></i>
+                        <p>У вас пока нет активов</p>
+                        <small>Попробуйте обновить страницу или купить активы</small>
+                        <button class="btn-primary" onclick="window.location.href='coins.html'">Купить активы</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Сортируем активы по стоимости
+            const sortedAssets = [...userAssets].sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0));
+
+            assetsList.innerHTML = sortedAssets.map(asset => {
+                const profitLoss = asset.profitLoss || 0;
+                const profitLossPercent = asset.profitLossPercent || 0;
+                const currentValue = asset.currentValue || 0;
+                
+                return `
+                    <div class="asset-item" onclick="viewAssetDetails('${asset.symbol}')">
+                        <div class="asset-info">
+                            <div class="asset-icon" style="background: ${window.exchangeAPI.getCoinColor(asset.symbol)}">
+                                <i class="${window.exchangeAPI.getCoinIcon(asset.symbol)}"></i>
+                            </div>
+                            <div class="asset-details">
+                                <div class="asset-name">${asset.symbol}</div>
+                                <div class="asset-amount">${formatCrypto(asset.amount)} ${asset.symbol}</div>
+                            </div>
+                        </div>
+                        <div class="asset-value">
+                            <div class="value-amount">$${formatCurrency(currentValue)}</div>
+                            <div class="profit-loss ${profitLoss >= 0 ? 'positive' : 'negative'}">
+                                ${profitLoss >= 0 ? '+' : ''}$${formatCurrency(profitLoss)} (${profitLossPercent >= 0 ? '+' : ''}${profitLossPercent.toFixed(2)}%)
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadRecentTransactions() {
+            try {
+                const transactions = await window.exchangeAPI.getTransactions(5);
+                const transactionsList = document.getElementById('transactionsList');
+                
+                if (!transactionsList) return;
+
+                if (transactions.length === 0) {
+                    transactionsList.innerHTML = `
+                        <div class="empty-state">
+                            <p>Нет транзакций</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                transactionsList.innerHTML = transactions.map(transaction => {
+                    const isBuy = transaction.type === 'buy';
+                    const icon = isBuy ? 'fa-arrow-up' : 'fa-arrow-down';
+                    const color = isBuy ? '#34c759' : '#ff3b30';
+                    
+                    return `
+                        <div class="transaction-item">
+                            <div class="transaction-icon" style="background: ${color}">
+                                <i class="fas ${icon}"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-type">${isBuy ? 'Покупка' : 'Продажа'}</div>
+                                <div class="transaction-amount">${formatCrypto(transaction.amount)} ${transaction.assetId}</div>
+                                <div class="transaction-time">${formatDate(transaction.timestamp)}</div>
+                            </div>
+                            <div class="transaction-value">
+                                $${formatCurrency(transaction.usdAmount)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки транзакций:', error);
+            }
+        }
+
+        async function updatePortfolioData() {
+            try {
+                await Promise.all([
+                    loadUserBalance(),
+                    loadUserAssets()
+                ]);
+                updatePortfolioDisplay();
+            } catch (error) {
+                console.error('Ошибка обновления данных:', error);
+            }
+        }
+
+        async function refreshPortfolio() {
+            try {
+                const refreshBtn = document.querySelector('.btn-secondary');
+                const originalText = refreshBtn.innerHTML;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обновление...';
+                refreshBtn.disabled = true;
+
+                await updatePortfolioData();
+                
+                showToast('Успех', 'Портфель обновлен', 'success');
+            } catch (error) {
+                console.error('Ошибка обновления:', error);
+                showToast('Ошибка', 'Не удалось обновить портфель', 'error');
+            } finally {
+                const refreshBtn = document.querySelector('.btn-secondary');
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+            }
+        }
+
+        async function syncPortfolio() {
+            try {
+                const syncBtn = document.querySelector('.btn-secondary[onclick="syncPortfolio()"]');
+                const originalText = syncBtn.innerHTML;
+                syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                syncBtn.disabled = true;
+
+                const result = await window.exchangeAPI.syncPortfolio();
+                
+                if (result.success) {
+                    await updatePortfolioData();
+                    showToast('Успех', 'Портфель синхронизирован с балансом', 'success');
+                } else {
+                    showToast('Ошибка', result.errors?.join(', ') || 'Ошибка синхронизации', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка синхронизации:', error);
+                showToast('Ошибка', 'Не удалось синхронизировать портфель', 'error');
+            } finally {
+                const syncBtn = document.querySelector('.btn-secondary[onclick="syncPortfolio()"]');
+                syncBtn.innerHTML = originalText;
+                syncBtn.disabled = false;
+            }
+        }
+
+        async function debugPortfolio() {
+            try {
+                console.log('=== DEBUG PORTFOLIO ===');
+                
+                // Проверяем баланс
+                const balance = await window.exchangeAPI.getBalance();
+                console.log('User balance:', balance);
+                
+                // Проверяем портфель
+                const portfolio = await window.exchangeAPI.getPortfolio();
+                console.log('User portfolio:', portfolio);
+                
+                // Проверяем активы
+                const assets = await window.exchangeAPI.getCoins();
+                console.log('Available assets:', assets);
+                
+                showToast('Отладка', 'Данные выведены в консоль', 'info');
+            } catch (error) {
+                console.error('Ошибка отладки:', error);
+                showToast('Ошибка', 'Ошибка при отладке', 'error');
+            }
+        }
+
+        function viewAssetDetails(symbol) {
+            // Находим ID актива по символу
+            const asset = assets.find(a => a.symbol.toUpperCase() === symbol);
+            if (asset) {
+                window.location.href = `asset-details.html?asset=${asset.id}`;
+            }
+        }
+
+        function initializeNavigation() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const page = button.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+        function navigateToPage(page) {
+            if (page === 'home') {
+                window.location.href = 'index.html';
+            } else if (page === 'coins') {
+                window.location.href = 'coins.html';
+            } else if (page === 'portfolio') {
+                window.location.href = 'portfolio.html';
+            } else if (page === 'settings') {
+                window.location.href = 'settings.html';
+            }
+        }
+
+        function exportPortfolio() {
+            try {
+                const portfolioData = {
+                    totalValue: userAssets.reduce((sum, asset) => sum + (asset.currentValue || 0), 0) + userBalance,
+                    totalInvested: userAssets.reduce((sum, asset) => sum + (asset.totalInvested || 0), 0),
+                    totalProfit: userAssets.reduce((sum, asset) => sum + (asset.profitLoss || 0), 0),
+                    assets: userAssets,
+                    exportDate: new Date().toISOString()
+                };
+
+                const blob = new Blob([JSON.stringify(portfolioData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `portfolio_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                showToast('Успех', 'Портфель экспортирован', 'success');
+            } catch (error) {
+                console.error('Ошибка экспорта:', error);
+                showToast('Ошибка', 'Не удалось экспортировать портфель', 'error');
+            }
+        }
+
+        // Вспомогательные функции
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function formatCrypto(amount) {
+            return amount.toFixed(8);
+        }
+
+        function formatDate(timestamp) {
+            return new Date(timestamp).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>${title}</strong>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+
+    </script>
+</body>
+
+</html>

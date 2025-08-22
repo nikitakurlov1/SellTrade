@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - SellBit</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="app-title">Настройки</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="saveSettings()">
+                    <i class="fas fa-save"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Profile Section -->
+            <section class="profile-section">
+                <div class="profile-card">
+                    <div class="profile-info">
+                        <div class="profile-avatar" id="profileAvatar">U</div>
+                        <div class="profile-details">
+                            <div class="profile-name" id="profileName">Пользователь</div>
+                            <div class="profile-email" id="profileEmail">user@example.com</div>
+                        </div>
+                    </div>
+                    <button class="icon-btn" onclick="editProfile()">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section class="settings-section">
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="setting-details">
+                                <div class="setting-name">Уведомления</div>
+                                <div class="setting-description">Получать уведомления о транзакциях</div>
+                            </div>
+                        </div>
+                        <div class="setting-toggle">
+                            <input type="checkbox" id="notificationsToggle" checked>
+                            <label for="notificationsToggle"></label>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-icon">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <div class="setting-details">
+                                <div class="setting-name">Сменить пароль</div>
+                                <div class="setting-description">Изменить пароль аккаунта</div>
+                            </div>
+                        </div>
+                        <button class="icon-btn" onclick="changePassword()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-icon">
+                                <i class="fas fa-language"></i>
+                            </div>
+                            <div class="setting-details">
+                                <div class="setting-name">Язык</div>
+                                <div class="setting-description" id="languageDescription">Русский</div>
+                            </div>
+                        </div>
+                        <button class="icon-btn" onclick="changeLanguage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-icon">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                            <div class="setting-details">
+                                <div class="setting-name">Помощь</div>
+                                <div class="setting-description">FAQ и поддержка</div>
+                            </div>
+                        </div>
+                        <button class="icon-btn" onclick="openHelp()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="setting-details">
+                                <div class="setting-name">О приложении</div>
+                                <div class="setting-description">Версия 1.0.0</div>
+                            </div>
+                        </div>
+                        <button class="icon-btn" onclick="showAbout()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logout Section -->
+            <section class="logout-section">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Выйти из аккаунта
+                </button>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" data-page="coins">
+                <i class="fas fa-coins"></i>
+                <span>Монеты</span>
+            </button>
+            <button class="nav-btn" data-page="portfolio">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+            <button class="nav-btn active" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Password Change Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Сменить пароль</h3>
+                <button class="close-btn" onclick="closePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="currentPassword">Текущий пароль</label>
+                    <input type="password" id="currentPassword" placeholder="Введите текущий пароль">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Новый пароль</label>
+                    <input type="password" id="newPassword" placeholder="Введите новый пароль">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Подтвердите пароль</label>
+                    <input type="password" id="confirmPassword" placeholder="Подтвердите новый пароль">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePasswordModal()">Отмена</button>
+                <button class="btn btn-primary" onclick="saveNewPassword()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Selection Modal -->
+    <div class="modal" id="languageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Выберите язык</h3>
+                <button class="close-btn" onclick="closeLanguageModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="language-options">
+                    <div class="language-option" onclick="selectLanguage('ru')">
+                        <div class="language-info">
+                            <div class="language-name">Русский</div>
+                            <div class="language-native">Русский</div>
+                        </div>
+                        <div class="language-check" id="ruCheck">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="language-option" onclick="selectLanguage('en')">
+                        <div class="language-info">
+                            <div class="language-name">English</div>
+                            <div class="language-native">English</div>
+                        </div>
+                        <div class="language-check" id="enCheck">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="language-option" onclick="selectLanguage('zh')">
+                        <div class="language-info">
+                            <div class="language-name">中文</div>
+                            <div class="language-native">Chinese</div>
+                        </div>
+                        <div class="language-check" id="zhCheck">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLanguageModal()">Отмена</button>
+                <button class="btn btn-primary" onclick="saveLanguage()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Помощь и поддержка</h3>
+                <button class="close-btn" onclick="closeHelpModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="help-sections">
+                    <div class="help-section">
+                        <h4><i class="fas fa-question-circle"></i> Часто задаваемые вопросы</h4>
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Как купить криптовалюту?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>1. Перейдите в раздел "Монеты"<br>
+                                2. Выберите нужную криптовалюту<br>
+                                3. Нажмите "Купить"<br>
+                                4. Введите сумму в USD<br>
+                                5. Подтвердите покупку</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Как продать криптовалюту?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>1. Перейдите в раздел "Портфель"<br>
+                                2. Выберите актив для продажи<br>
+                                3. Нажмите "Продать"<br>
+                                4. Введите количество<br>
+                                5. Подтвердите продажу</p>
+                            </div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Какие комиссии взимаются?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Комиссия за покупку и продажу составляет 0.25% от суммы сделки.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-headset"></i> Служба поддержки</h4>
+                        <div class="support-options">
+                            <div class="support-option" onclick="contactSupport('email')">
+                                <i class="fas fa-envelope"></i>
+                                <span>Написать на email</span>
+                            </div>
+                            <div class="support-option" onclick="contactSupport('chat')">
+                                <i class="fas fa-comments"></i>
+                                <span>Онлайн чат</span>
+                            </div>
+                            <div class="support-option" onclick="contactSupport('phone')">
+                                <i class="fas fa-phone"></i>
+                                <span>Позвонить</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeHelpModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+    <script>
+        // Инициализация страницы настроек
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем авторизацию
+            const savedUser = localStorage.getItem('currentUser');
+            if (!savedUser) {
+                window.location.href = '/';
+                return;
+            }
+
+            initializeSettings();
+            initializeNavigation();
+            loadUserProfile();
+        });
+
+        function initializeSettings() {
+            // Загружаем сохраненные настройки
+            const settings = JSON.parse(localStorage.getItem('userSettings')) || {
+                notifications: true,
+                language: 'ru'
+            };
+
+            // Применяем настройки к переключателям
+            document.getElementById('notificationsToggle').checked = settings.notifications;
+
+            // Загружаем язык
+            loadLanguageSettings(settings.language);
+
+            // Добавляем обработчики событий
+            document.getElementById('notificationsToggle').addEventListener('change', function() {
+                settings.notifications = this.checked;
+                saveSettingsToStorage(settings);
+                showToast('Уведомления', settings.notifications ? 'Включены' : 'Отключены', 'success');
+            });
+        }
+
+        function loadUserProfile() {
+            const savedUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (savedUser) {
+                document.getElementById('profileName').textContent = savedUser.name;
+                document.getElementById('profileEmail').textContent = savedUser.email;
+                document.getElementById('profileAvatar').textContent = savedUser.name.charAt(0).toUpperCase();
+            }
+        }
+
+        function initializeNavigation() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const page = button.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+
+
+        function saveSettings() {
+            const settings = {
+                notifications: document.getElementById('notificationsToggle').checked
+            };
+
+            saveSettingsToStorage(settings);
+            showToast('Успешно', 'Настройки сохранены', 'success');
+        }
+
+        function saveSettingsToStorage(settings) {
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+        }
+
+        function editProfile() {
+            showToast('Информация', 'Редактирование профиля будет доступно в ближайшее время', 'info');
+        }
+
+        function changePassword() {
+            document.getElementById('passwordModal').style.display = 'flex';
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            // Очищаем поля
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        function saveNewPassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Проверяем заполнение полей
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('Ошибка', 'Заполните все поля', 'error');
+                return;
+            }
+
+            // Проверяем совпадение паролей
+            if (newPassword !== confirmPassword) {
+                showToast('Ошибка', 'Пароли не совпадают', 'error');
+                return;
+            }
+
+            // Проверяем длину пароля
+            if (newPassword.length < 6) {
+                showToast('Ошибка', 'Пароль должен содержать минимум 6 символов', 'error');
+                return;
+            }
+
+            // Получаем текущего пользователя
+            const savedUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!savedUser) {
+                showToast('Ошибка', 'Пользователь не найден', 'error');
+                return;
+            }
+
+            // Проверяем текущий пароль (в реальном приложении здесь была бы проверка с сервером)
+            if (currentPassword !== savedUser.password) {
+                showToast('Ошибка', 'Неверный текущий пароль', 'error');
+                return;
+            }
+
+            // Обновляем пароль
+            savedUser.password = newPassword;
+            localStorage.setItem('currentUser', JSON.stringify(savedUser));
+
+            closePasswordModal();
+            showToast('Успешно', 'Пароль успешно изменен', 'success');
+        }
+
+        function openHelp() {
+            document.getElementById('helpModal').style.display = 'flex';
+        }
+
+        function showAbout() {
+            const aboutInfo = `
+                <div style="text-align: center; padding: 20px;">
+                    <h3 style="margin-bottom: 15px;">SellBit</h3>
+                    <p style="margin-bottom: 10px;"><strong>Версия:</strong> 1.0.0</p>
+                    <p style="margin-bottom: 10px;"><strong>Описание:</strong> Современная платформа для торговли криптовалютами</p>
+                    <p style="margin-bottom: 10px;"><strong>Разработчик:</strong> SellBit Team</p>
+                    <p style="margin-bottom: 10px;"><strong>Дата выпуска:</strong> ${new Date().toLocaleDateString('ru-RU')}</p>
+                    <hr style="margin: 15px 0;">
+                    <p style="font-size: 14px; color: #8E8E93;">
+                        © 2024 SellBit. Все права защищены.
+                    </p>
+                </div>
+            `;
+            
+            // Создаем временное модальное окно для информации о приложении
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>О приложении</h3>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        ${aboutInfo}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Закрыть</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти из аккаунта?')) {
+                // Очищаем данные пользователя
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('userBalance');
+                localStorage.removeItem('userAssets');
+                localStorage.removeItem('userTransactions');
+                localStorage.removeItem('activeStakes');
+                localStorage.removeItem('userSettings');
+                
+                // Перенаправляем на страницу логина (главную страницу CRM)
+                window.location.href = '/';
+            }
+        }
+
+        function navigateToPage(page) {
+            if (page === 'home') {
+                window.location.href = 'index.html';
+            } else if (page === 'coins') {
+                window.location.href = 'coins.html';
+            } else if (page === 'portfolio') {
+                window.location.href = 'portfolio.html';
+            } else if (page === 'settings') {
+                window.location.href = 'settings.html';
+            }
+        }
+
+        // Функции для работы с языком
+        function changeLanguage() {
+            document.getElementById('languageModal').style.display = 'flex';
+        }
+
+        function closeLanguageModal() {
+            document.getElementById('languageModal').style.display = 'none';
+        }
+
+        function selectLanguage(lang) {
+            // Убираем все галочки
+            document.querySelectorAll('.language-check').forEach(check => {
+                check.style.display = 'none';
+            });
+            
+            // Показываем галочку для выбранного языка
+            document.getElementById(lang + 'Check').style.display = 'flex';
+            
+            // Сохраняем выбранный язык
+            window.selectedLanguage = lang;
+        }
+
+        function saveLanguage() {
+            if (window.selectedLanguage) {
+                const settings = JSON.parse(localStorage.getItem('userSettings')) || {};
+                settings.language = window.selectedLanguage;
+                localStorage.setItem('userSettings', JSON.stringify(settings));
+                
+                // Обновляем отображение
+                loadLanguageSettings(window.selectedLanguage);
+                
+                closeLanguageModal();
+                showToast('Язык', 'Язык успешно изменен', 'success');
+            }
+        }
+
+        function loadLanguageSettings(language) {
+            const languageNames = {
+                'ru': 'Русский',
+                'en': 'English',
+                'zh': '中文'
+            };
+            
+            document.getElementById('languageDescription').textContent = languageNames[language] || 'Русский';
+            
+            // Устанавливаем галочку для текущего языка в модальном окне
+            document.querySelectorAll('.language-check').forEach(check => {
+                check.style.display = 'none';
+            });
+            
+            const checkElement = document.getElementById(language + 'Check');
+            if (checkElement) {
+                checkElement.style.display = 'flex';
+            }
+            
+            // Сохраняем выбранный язык для модального окна
+            window.selectedLanguage = language;
+        }
+
+        // Функции для работы с помощью
+        function closeHelpModal() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        function toggleFAQ(element) {
+            const answer = element.nextElementSibling;
+            const icon = element.querySelector('i');
+            
+            if (answer.style.display === 'block') {
+                answer.style.display = 'none';
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                answer.style.display = 'block';
+                icon.className = 'fas fa-chevron-up';
+            }
+        }
+
+        function contactSupport(type) {
+            const supportInfo = {
+                email: {
+                    title: 'Email поддержки',
+                    message: 'support@kriptoexchange.com',
+                    action: 'Скопировать email'
+                },
+                chat: {
+                    title: 'Онлайн чат',
+                    message: 'Чат будет доступен в ближайшее время',
+                    action: 'Понятно'
+                },
+                phone: {
+                    title: 'Телефон поддержки',
+                    message: '+7 (800) 555-0123',
+                    action: 'Скопировать номер'
+                }
+            };
+            
+            const info = supportInfo[type];
+            
+            if (type === 'email' || type === 'phone') {
+                // Копируем в буфер обмена
+                navigator.clipboard.writeText(info.message).then(() => {
+                    showToast('Скопировано', info.message, 'success');
+                });
+            } else {
+                showToast(info.title, info.message, 'info');
+            }
+        }
+
+        // Закрытие модальных окон при клике вне их
+        window.onclick = function(event) {
+            const passwordModal = document.getElementById('passwordModal');
+            const languageModal = document.getElementById('languageModal');
+            const helpModal = document.getElementById('helpModal');
+            
+            if (event.target === passwordModal) {
+                closePasswordModal();
+            } else if (event.target === languageModal) {
+                closeLanguageModal();
+            } else if (event.target === helpModal) {
+                closeHelpModal();
+            }
+        }
+    </script>
+</body>
+
+</html> 
