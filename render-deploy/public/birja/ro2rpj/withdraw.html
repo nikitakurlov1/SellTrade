@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вывод средств - SellBit</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="icon-btn back-btn" onclick="history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="app-title">Вывод средств</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Balance Info -->
+            <section class="balance-section">
+                <div class="balance-card">
+                    <div class="balance-header">
+                        <span>Доступный баланс</span>
+                    </div>
+                    <div class="balance-amount" id="availableBalance">$0.00</div>
+                </div>
+            </section>
+
+            <!-- Amount Input -->
+            <section class="amount-section">
+                <div class="amount-card">
+                    <h3>Сумма вывода</h3>
+                    <div class="amount-input">
+                        <input type="number" id="withdrawAmount" placeholder="0.00" min="1" step="0.01" value="100">
+                        <span class="currency">USD</span>
+                    </div>
+                    <div class="quick-amounts">
+                        <button class="amount-btn" onclick="setAmount(50)">$50</button>
+                        <button class="amount-btn" onclick="setAmount(100)">$100</button>
+                        <button class="amount-btn" onclick="setAmount(250)">$250</button>
+                        <button class="amount-btn" onclick="setAmount(500)">$500</button>
+                        <button class="amount-btn" onclick="setMaxAmount()">Максимум</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Withdrawal Methods -->
+            <section class="withdrawal-methods-section">
+                <h3>Способ вывода</h3>
+                <div class="withdrawal-methods-list" id="withdrawalMethodsList">
+                    <!-- Withdrawal methods will be loaded dynamically -->
+                </div>
+            </section>
+
+            <!-- Withdrawal Form -->
+            <section class="withdrawal-form-section" id="withdrawalFormSection" style="display: none;">
+                <div class="withdrawal-form-card">
+                    <h3 id="withdrawalMethodTitle">Реквизиты для вывода</h3>
+                    <form id="withdrawalForm">
+                        <div id="withdrawalFormFields">
+                            <!-- Form fields will be loaded dynamically -->
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Action Button -->
+            <section class="action-section">
+                <button class="btn-primary" id="withdrawBtn" onclick="createWithdrawalRequest()" disabled>
+                    Вывести средства
+                </button>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" data-page="coins">
+                <i class="fas fa-coins"></i>
+                <span>Монеты</span>
+            </button>
+            <button class="nav-btn" data-page="portfolio">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+
+            <button class="nav-btn" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="exchange-api.js"></script>
+    <script>
+        let selectedWithdrawalMethod = null;
+        let userBalance = 0;
+
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            // Проверяем авторизацию
+            if (!window.exchangeAPI.isAuthenticated()) {
+                window.location.href = '/';
+                return;
+            }
+
+            initializePage();
+            loadUserBalance();
+            loadWithdrawalMethods();
+            initializeEventHandlers();
+        });
+
+        function initializePage() {
+            // Инициализируем навигацию
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const page = btn.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+
+            // Инициализируем кнопки быстрых сумм
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.textContent === 'Максимум') {
+                        setMaxAmount();
+                    } else {
+                        const amount = this.textContent.replace(/[^\d.]/g, '');
+                        setAmount(parseFloat(amount));
+                    }
+                });
+            });
+        }
+
+        function initializeEventHandlers() {
+            // Обработчик изменения суммы
+            document.getElementById('withdrawAmount').addEventListener('input', function() {
+                updateWithdrawButton();
+            });
+        }
+
+        async function loadUserBalance() {
+            try {
+                const balance = await window.exchangeAPI.getBalance();
+                userBalance = balance.USD || 0;
+                document.getElementById('availableBalance').textContent = `$${formatCurrency(userBalance)}`;
+            } catch (error) {
+                console.error('Error loading balance:', error);
+            }
+        }
+
+        function loadWithdrawalMethods() {
+            const withdrawalMethods = [
+                {
+                    id: 'bank_card',
+                    name: 'Банковская карта',
+                    icon: 'fas fa-credit-card',
+                    description: 'Вывод на карту',
+                    color: '#007aff',
+                    fields: [
+                        { name: 'cardNumber', label: 'Номер карты', type: 'text', placeholder: '1234 5678 9012 3456', required: true },
+                        { name: 'cardHolder', label: 'Владелец карты', type: 'text', placeholder: 'IVAN IVANOV', required: true }
+                    ]
+                },
+                {
+                    id: 'bank_transfer',
+                    name: 'Банковский перевод',
+                    icon: 'fas fa-university',
+                    description: 'Перевод на банковский счет',
+                    color: '#34c759',
+                    fields: [
+                        { name: 'accountNumber', label: 'Номер счета', type: 'text', placeholder: '12345678901234567890', required: true },
+                        { name: 'bankName', label: 'Название банка', type: 'text', placeholder: 'Сбербанк', required: true },
+                        { name: 'bik', label: 'БИК', type: 'text', placeholder: '044525225', required: true },
+                        { name: 'inn', label: 'ИНН', type: 'text', placeholder: '1234567890', required: true }
+                    ]
+                },
+                {
+                    id: 'crypto',
+                    name: 'Криптовалюта',
+                    icon: 'fas fa-coins',
+                    description: 'Вывод в криптовалюте',
+                    color: '#ff9500',
+                    fields: [
+                        { name: 'cryptoAddress', label: 'Адрес кошелька', type: 'text', placeholder: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', required: true },
+                        { name: 'cryptoType', label: 'Тип криптовалюты', type: 'select', options: ['BTC', 'ETH', 'USDT'], required: true }
+                    ]
+                },
+                {
+                    id: 'qiwi',
+                    name: 'QIWI Кошелек',
+                    icon: 'fas fa-wallet',
+                    description: 'Вывод на QIWI',
+                    color: '#ff3b30',
+                    fields: [
+                        { name: 'qiwiNumber', label: 'Номер QIWI кошелька', type: 'text', placeholder: '+7 900 123-45-67', required: true }
+                    ]
+                }
+            ];
+
+            const container = document.getElementById('withdrawalMethodsList');
+            container.innerHTML = withdrawalMethods.map(method => `
+                <div class="withdrawal-method-item" onclick="selectWithdrawalMethod('${method.id}')">
+                    <div class="withdrawal-method-icon" style="background: ${method.color}">
+                        <i class="${method.icon}"></i>
+                    </div>
+                    <div class="withdrawal-method-info">
+                        <div class="withdrawal-method-name">${method.name}</div>
+                        <div class="withdrawal-method-description">${method.description}</div>
+                    </div>
+                    <div class="withdrawal-method-check">
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectWithdrawalMethod(methodId) {
+            selectedWithdrawalMethod = methodId;
+            
+            // Обновляем UI
+            document.querySelectorAll('.withdrawal-method-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            const selectedItem = document.querySelector(`[onclick="selectWithdrawalMethod('${methodId}')"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+
+            // Показываем форму
+            showWithdrawalForm(methodId);
+            updateWithdrawButton();
+        }
+
+        function showWithdrawalForm(methodId) {
+            const formSection = document.getElementById('withdrawalFormSection');
+            const formFields = document.getElementById('withdrawalFormFields');
+            const methodTitle = document.getElementById('withdrawalMethodTitle');
+
+            formSection.style.display = 'block';
+
+            const methods = {
+                'bank_card': {
+                    title: 'Вывод на карту',
+                    fields: [
+                        { name: 'cardNumber', label: 'Номер карты', type: 'text', placeholder: '1234 5678 9012 3456', required: true },
+                        { name: 'cardHolder', label: 'Владелец карты', type: 'text', placeholder: 'IVAN IVANOV', required: true }
+                    ]
+                },
+                'bank_transfer': {
+                    title: 'Банковский перевод',
+                    fields: [
+                        { name: 'accountNumber', label: 'Номер счета', type: 'text', placeholder: '12345678901234567890', required: true },
+                        { name: 'bankName', label: 'Название банка', type: 'text', placeholder: 'Сбербанк', required: true },
+                        { name: 'bik', label: 'БИК', type: 'text', placeholder: '044525225', required: true },
+                        { name: 'inn', label: 'ИНН', type: 'text', placeholder: '1234567890', required: true }
+                    ]
+                },
+                'crypto': {
+                    title: 'Вывод в криптовалюте',
+                    fields: [
+                        { name: 'cryptoAddress', label: 'Адрес кошелька', type: 'text', placeholder: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', required: true },
+                        { name: 'cryptoType', label: 'Тип криптовалюты', type: 'select', options: ['BTC', 'ETH', 'USDT'], required: true }
+                    ]
+                },
+                'qiwi': {
+                    title: 'Вывод на QIWI',
+                    fields: [
+                        { name: 'qiwiNumber', label: 'Номер QIWI кошелька', type: 'text', placeholder: '+7 900 123-45-67', required: true }
+                    ]
+                }
+            };
+
+            const method = methods[methodId];
+            if (!method) return;
+
+            methodTitle.textContent = method.title;
+            formFields.innerHTML = method.fields.map(field => {
+                if (field.type === 'select') {
+                    return `
+                        <div class="form-group">
+                            <label for="${field.name}">${field.label}</label>
+                            <select id="${field.name}" name="${field.name}" ${field.required ? 'required' : ''}>
+                                <option value="">Выберите ${field.label.toLowerCase()}</option>
+                                ${field.options.map(option => `<option value="${option}">${option}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="form-group">
+                            <label for="${field.name}">${field.label}</label>
+                            <input type="${field.type}" id="${field.name}" name="${field.name}" 
+                                   placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function setAmount(amount) {
+            if (amount > userBalance) {
+                showToast('Ошибка', 'Сумма превышает доступный баланс', 'error');
+                return;
+            }
+            document.getElementById('withdrawAmount').value = amount;
+            updateWithdrawButton();
+        }
+
+        function setMaxAmount() {
+            setAmount(userBalance);
+        }
+
+        function updateWithdrawButton() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+            const withdrawBtn = document.getElementById('withdrawBtn');
+            
+            if (amount > 0 && amount <= userBalance && selectedWithdrawalMethod) {
+                withdrawBtn.disabled = false;
+                withdrawBtn.textContent = `Вывести $${formatCurrency(amount)}`;
+            } else {
+                withdrawBtn.disabled = true;
+                withdrawBtn.textContent = 'Вывести средства';
+            }
+        }
+
+        function createWithdrawalRequest() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            
+            if (!amount || amount <= 0) {
+                showToast('Ошибка', 'Введите корректную сумму', 'error');
+                return;
+            }
+
+            if (amount > userBalance) {
+                showToast('Ошибка', 'Сумма превышает доступный баланс', 'error');
+                return;
+            }
+
+            if (!selectedWithdrawalMethod) {
+                showToast('Ошибка', 'Выберите способ вывода', 'error');
+                return;
+            }
+
+            // Проверяем заполнение формы
+            const form = document.getElementById('withdrawalForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Собираем данные формы
+            const formData = new FormData(form);
+            const withdrawalData = {
+                amount: amount,
+                method: selectedWithdrawalMethod
+            };
+
+            // Добавляем поля формы
+            for (let [key, value] of formData.entries()) {
+                withdrawalData[key] = value;
+            }
+
+            // Создаем запрос на вывод
+            submitWithdrawalRequest(withdrawalData);
+        }
+
+        async function submitWithdrawalRequest(withdrawalData) {
+            try {
+                const response = await fetch('/api/withdraw/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.exchangeAPI.getToken()}`
+                    },
+                    body: JSON.stringify(withdrawalData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Успех', 'Запрос на вывод создан. Ожидайте обработки.', 'success');
+                    
+                    // Логируем операцию
+                    await window.exchangeAPI.logOperation('withdrawal_request_created', {
+                        amount: withdrawalData.amount,
+                        method: withdrawalData.method,
+                        requestId: data.requestId
+                    });
+                    
+                    // Возвращаемся на главную страницу через 3 секунды
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
+                } else {
+                    showToast('Ошибка', data.errors.join(', '), 'error');
+                }
+            } catch (error) {
+                console.error('Error creating withdrawal request:', error);
+                showToast('Ошибка', 'Не удалось создать запрос на вывод', 'error');
+            }
+        }
+
+        function navigateToPage(page) {
+            if (page === 'home') {
+                window.location.href = 'index.html';
+            } else if (page === 'coins') {
+                window.location.href = 'coins.html';
+            } else if (page === 'portfolio') {
+                window.location.href = 'portfolio.html';
+
+            } else if (page === 'settings') {
+                window.location.href = 'settings.html';
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>${title}</strong>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+
+</html>

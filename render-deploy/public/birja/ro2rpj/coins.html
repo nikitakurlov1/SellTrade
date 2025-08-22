@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Активы - SellBit</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Top Bar with Currency Selector and Balance -->
+        <div class="top-bar">
+            <div class="currency-selector">
+                <button class="currency-btn" data-currency="DOLLR">DOLLR</button>
+                <button class="currency-btn active" data-currency="USDT">USDT</button>
+            </div>
+            <div class="balance-display">
+                <div class="balance-label">Баланс</div>
+                <div class="balance-amount">0</div>
+            </div>
+            <div class="help-icon">
+                <i class="fas fa-question"></i>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <div class="main-tabs">
+            <button class="main-tab active" data-tab="instruments">
+                <i class="fas fa-coins"></i>
+                Инструменты
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="assets-list" id="assetsList">
+                <!-- Assets will be loaded dynamically -->
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn active" data-page="coins">
+                <i class="fas fa-coins"></i>
+                <span>Монеты</span>
+            </button>
+            <button class="nav-btn" data-page="portfolio">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+            <button class="nav-btn" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="exchange-api.js"></script>
+    <script src="account.js"></script>
+    <script src="balance.js"></script>
+    <script src="operations.js"></script>
+    <script src="portfolio.js"></script>
+    <script src="history.js"></script>
+    <script src="earnings.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Инициализация страницы активов
+        document.addEventListener('DOMContentLoaded', function () {
+            // Проверяем авторизацию
+            if (!window.exchangeAPI.isAuthenticated()) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Устанавливаем текущую страницу
+            window.currentPage = 'coins';
+
+            initializeAssets();
+            initializeCurrencySelector();
+            initializeMainTabs();
+            initializeNavigation();
+            initializePageButtonHandlers();
+
+
+            // Обновляем цены каждые 5 секунд
+            setInterval(updateAssetPrices, 5000);
+        });
+
+        // Инициализация обработчиков кнопок для страницы активов
+        function initializePageButtonHandlers() {
+            // Кнопки валют
+            document.querySelectorAll('.currency-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const currency = this.dataset.currency;
+                    handleCurrencyChange(currency);
+                });
+            });
+
+            // Кнопки главных вкладок
+            document.querySelectorAll('.main-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabType = this.dataset.tab;
+                    handleMainTabChange(tabType);
+                });
+            });
+
+            // Кнопки в карточках активов
+            document.querySelectorAll('.asset-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const assetId = this.dataset.asset;
+                    if (assetId) {
+                        window.location.href = `asset-details.html?asset=${assetId}`;
+                    }
+                });
+            });
+
+            // Кнопки в заголовке
+            document.querySelectorAll('.header .icon-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.dataset.action;
+                    handleHeaderAction(action);
+                });
+            });
+
+            // Кнопка помощи
+            document.querySelectorAll('.help-icon').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    openHelpModal();
+                });
+            });
+        }
+
+        // Обработчик смены валюты
+        function handleCurrencyChange(currency) {
+            // Обновляем активную кнопку
+            document.querySelectorAll('.currency-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.currency === currency) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Обновляем отображение цен в новой валюте
+            updatePricesInCurrency(currency);
+            
+            showToast('Валюта изменена', `Переключено на ${currency}`, 'info');
+        }
+
+        // Обработчик смены главной вкладки
+        function handleMainTabChange(tabType) {
+            // Поскольку у нас только одна вкладка, просто обновляем активное состояние
+            document.querySelectorAll('.main-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabType) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+
+        // Обработчики действий в заголовке
+        function handleHeaderAction(action) {
+            switch (action) {
+                case 'search':
+                    toggleSearch();
+                    break;
+                case 'filter':
+                    toggleFilter();
+                    break;
+                case 'sort':
+                    toggleSort();
+                    break;
+                default:
+                    console.log('Неизвестное действие в заголовке:', action);
+            }
+        }
+
+        // Обновление цен в выбранной валюте
+        function updatePricesInCurrency(currency) {
+            // Здесь будет логика конвертации цен
+            console.log('Обновление цен в валюте:', currency);
+        }
+
+        // Переключение поиска
+        function toggleSearch() {
+            const searchBar = document.querySelector('.search-bar');
+            if (searchBar) {
+                searchBar.style.display = searchBar.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        // Переключение фильтров
+        function toggleFilter() {
+            const filterBar = document.querySelector('.filter-bar');
+            if (filterBar) {
+                filterBar.style.display = filterBar.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        // Переключение сортировки
+        function toggleSort() {
+            showToast('Сортировка', 'Функция сортировки будет доступна в ближайшее время', 'info');
+        }
+
+        async function initializeAssets() {
+            try {
+                // Получаем монеты из CRM
+                const coins = await window.exchangeAPI.getCoins();
+                const balance = await window.exchangeAPI.getBalance();
+                
+                // Обновляем баланс в интерфейсе
+                const balanceElement = document.querySelector('.balance-amount');
+                if (balanceElement) {
+                    balanceElement.textContent = window.exchangeAPI.formatCurrency(balance.USD);
+                }
+                
+                displayAssets(coins);
+            } catch (error) {
+                console.error('Ошибка загрузки активов:', error);
+                showToast('Ошибка', 'Не удалось загрузить активы', 'error');
+            }
+        }
+
+        function displayAssets(assetList) {
+            const container = document.getElementById('assetsList');
+            if (!container) return;
+
+            container.innerHTML = assetList.map(asset => {
+                const icon = window.exchangeAPI.getCoinIcon(asset.symbol);
+                const color = window.exchangeAPI.getCoinColor(asset.symbol);
+                
+                return `
+                    <div class="asset-item" onclick="openAssetDetails('${asset.id}')">
+                        <div class="asset-info">
+                            <div class="asset-icon" style="background: ${color}">
+                                <i class="${icon}"></i>
+                                <div class="asset-badge">
+                                    <span>T</span>
+                                </div>
+                            </div>
+                            <div class="asset-details">
+                                <div class="asset-symbol">${asset.symbol}</div>
+                                <div class="asset-name">${asset.name}</div>
+                            </div>
+                        </div>
+                        <div class="asset-values">
+                            <div class="asset-price">${window.exchangeAPI.formatCurrency(asset.price)}</div>
+                            <div class="asset-change ${asset.priceChange >= 0 ? 'positive' : 'negative'}">
+                                ${window.exchangeAPI.formatPercent(asset.priceChange)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateAssetPrices() {
+            // Обновляем цены активов
+            const assetItems = document.querySelectorAll('.asset-item');
+            assetItems.forEach(item => {
+                const priceElement = item.querySelector('.asset-price');
+                const changeElement = item.querySelector('.asset-change');
+                
+                const currentPrice = parseFloat(priceElement.textContent.replace(/[^\d.-]/g, ''));
+                const changePercent = (Math.random() - 0.5) * 2; // -1% до +1%
+                const newPrice = currentPrice * (1 + changePercent / 100);
+                
+                priceElement.textContent = formatCurrency(newPrice);
+                changeElement.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`;
+                changeElement.className = `asset-change ${changePercent >= 0 ? 'positive' : 'negative'}`;
+            });
+        }
+
+        function initializeCurrencySelector() {
+            const currencyBtns = document.querySelectorAll('.currency-btn');
+            currencyBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currencyBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        function initializeMainTabs() {
+            const mainTabs = document.querySelectorAll('.main-tab');
+            mainTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    mainTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tabType = this.dataset.tab;
+                    if (tabType === 'trades') {
+                        showTradesView();
+                    } else {
+                        showInstrumentsView();
+                    }
+                });
+            });
+        }
+
+
+
+        function showInstrumentsView() {
+            // Показываем список активов
+            initializeAssets();
+        }
+
+        function initializeNavigation() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const page = button.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+        function openAssetDetails(assetId) {
+            window.location.href = `asset-details.html?asset=${assetId}`;
+        }
+
+        function navigateToPage(page) {
+            if (page === 'home') {
+                window.location.href = 'index.html';
+            } else if (page === 'coins') {
+                window.location.href = 'coins.html';
+            } else if (page === 'portfolio') {
+                window.location.href = 'portfolio.html';
+            } else if (page === 'settings') {
+                window.location.href = 'settings.html';
+            }
+        }
+
+        function formatCurrency(amount) {
+            if (amount >= 1000) {
+                return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else if (amount >= 1) {
+                return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+            } else {
+                return amount.toLocaleString('en-US', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+            }
+        }
+
+        // Функция для показа уведомлений
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>${title}</strong>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Автоматическое удаление через 5 секунд
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+
+    </script>
+</body>
+
+</html>

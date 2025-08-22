@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отладка авторизации</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        .debug-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .debug-info {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        button {
+            background: #007aff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056cc;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #333;
+            border-radius: 3px;
+            background: #000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Отладка авторизации</h1>
+    
+    <div class="debug-section">
+        <h2>1. Проверка элементов DOM</h2>
+        <button onclick="checkElements()">Проверить элементы</button>
+        <div id="elementsInfo" class="debug-info"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2. Тест localStorage</h2>
+        <button onclick="testLocalStorage()">Тест localStorage</button>
+        <div id="localStorageInfo" class="debug-info"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>3. Тест регистрации</h2>
+        <form id="debugForm">
+            <input type="text" id="debugName" placeholder="Имя" required>
+            <input type="email" id="debugEmail" placeholder="Email" required>
+            <input type="password" id="debugPassword" placeholder="Пароль" required>
+            <input type="password" id="debugPasswordConfirm" placeholder="Подтвердите пароль" required>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+        <div id="registrationInfo" class="debug-info"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>4. Очистка данных</h2>
+        <button onclick="clearData()">Очистить все данные</button>
+        <div id="clearInfo" class="debug-info"></div>
+    </div>
+    
+    <script>
+        function checkElements() {
+            const elements = {
+                authModal: document.getElementById('authModal'),
+                authTabs: document.querySelectorAll('.auth-tab'),
+                authForms: document.querySelectorAll('.auth-form'),
+                loginForm: document.getElementById('loginForm'),
+                registerForm: document.getElementById('registerForm'),
+                toastContainer: document.getElementById('toastContainer')
+            };
+            
+            const info = document.getElementById('elementsInfo');
+            info.innerHTML = JSON.stringify(elements, null, 2);
+        }
+        
+        function testLocalStorage() {
+            const testData = { test: 'data', timestamp: Date.now() };
+            try {
+                localStorage.setItem('test', JSON.stringify(testData));
+                const retrieved = JSON.parse(localStorage.getItem('test'));
+                const info = document.getElementById('localStorageInfo');
+                info.innerHTML = `localStorage работает: ${JSON.stringify(retrieved)}`;
+            } catch (error) {
+                const info = document.getElementById('localStorageInfo');
+                info.innerHTML = `Ошибка localStorage: ${error.message}`;
+            }
+        }
+        
+        document.getElementById('debugForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('debugName').value;
+            const email = document.getElementById('debugEmail').value;
+            const password = document.getElementById('debugPassword').value;
+            const passwordConfirm = document.getElementById('debugPasswordConfirm').value;
+            
+            const info = document.getElementById('registrationInfo');
+            
+            if (password !== passwordConfirm) {
+                info.innerHTML = 'Ошибка: Пароли не совпадают';
+                return;
+            }
+            
+            if (password.length < 6) {
+                info.innerHTML = 'Ошибка: Пароль должен содержать минимум 6 символов';
+                return;
+            }
+            
+            try {
+                const user = { name, email, id: Date.now().toString() };
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.setItem('userBalance', '0');
+                localStorage.setItem('userAssets', JSON.stringify([]));
+                localStorage.setItem('userTransactions', JSON.stringify([]));
+                localStorage.setItem('activeStakes', JSON.stringify([]));
+                
+                info.innerHTML = `Успешно! Пользователь создан: ${JSON.stringify(user)}`;
+            } catch (error) {
+                info.innerHTML = `Ошибка при сохранении: ${error.message}`;
+            }
+        });
+        
+        function clearData() {
+            try {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('userBalance');
+                localStorage.removeItem('userAssets');
+                localStorage.removeItem('userTransactions');
+                localStorage.removeItem('activeStakes');
+                localStorage.removeItem('test');
+                
+                const info = document.getElementById('clearInfo');
+                info.innerHTML = 'Все данные очищены';
+            } catch (error) {
+                const info = document.getElementById('clearInfo');
+                info.innerHTML = `Ошибка при очистке: ${error.message}`;
+            }
+        }
+        
+        // Автоматическая проверка при загрузке
+        window.addEventListener('load', function() {
+            console.log('Страница отладки загружена');
+            checkElements();
+            testLocalStorage();
+        });
+    </script>
+</body>
+</html> 

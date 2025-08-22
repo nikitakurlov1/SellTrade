@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детали актива - KriptoExchange</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="icon-btn" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="app-title" id="assetName">Актив</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="toggleFavorite()">
+                    <i class="fas fa-star" id="favoriteIcon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Asset Info Card -->
+            <section class="asset-info-card">
+                <div class="asset-header">
+                    <div class="asset-icon" id="assetIcon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="asset-details">
+                        <div class="asset-name" id="assetNameDisplay">Bitcoin</div>
+                        <div class="asset-symbol" id="assetSymbol">BTC</div>
+                    </div>
+                    <div class="asset-price-info">
+                        <div class="current-price" id="currentPrice">$43,250.00</div>
+                        <div class="price-change" id="priceChange">+2.45%</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chart Section -->
+            <section class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <h3>График цены</h3>
+                        <span class="chart-subtitle" id="chartSubtitle">Последние 24 часа</span>
+                    </div>
+                    <button class="export-btn" onclick="exportChartData()" title="Экспорт данных">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="test-btn" onclick="testSystem()" title="Тест системы">
+                        <i class="fas fa-bug"></i>
+                    </button>
+                </div>
+                <div class="chart-container" id="priceChart">
+                    <!-- Chart will be rendered here -->
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-line"></i>
+                        <p>График загружается...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trading Section -->
+            <section class="trading-section">
+                <div class="trading-tabs">
+                    <button class="trading-tab active" data-tab="buy">Купить</button>
+                    <button class="trading-tab" data-tab="sell">Продать</button>
+                </div>
+
+                <!-- Buy Form -->
+                <div class="trading-form" id="buyForm">
+                    <div class="form-group">
+                        <label>Сумма (USD)</label>
+                        <input type="number" id="buyAmount" placeholder="0.00" min="1" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Получите</label>
+                        <div class="crypto-amount" id="buyCryptoAmount">0.00000000 BTC</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Комиссия</label>
+                        <div class="commission" id="buyCommission">$0.00</div>
+                    </div>
+                    <div class="profit-info" id="buyProfitInfo"></div>
+                    <button class="trade-btn primary" onclick="executeBuy()">
+                        <i class="fas fa-arrow-up"></i>
+                        Купить BTC
+                    </button>
+                </div>
+
+                <!-- Sell Form -->
+                <div class="trading-form hidden" id="sellForm">
+                    <div class="form-group">
+                        <label>Количество (BTC)</label>
+                        <input type="number" id="sellAmount" placeholder="0.00000000" min="0.00000001" step="0.00000001">
+                    </div>
+                    <div class="form-group">
+                        <label>Получите</label>
+                        <div class="usd-amount" id="sellUsdAmount">$0.00</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Комиссия</label>
+                        <div class="commission" id="sellCommission">$0.00</div>
+                    </div>
+                    <div class="profit-info" id="sellProfitInfo"></div>
+                    <button class="trade-btn secondary" onclick="executeSell()">
+                        <i class="fas fa-arrow-down"></i>
+                        Продать BTC
+                    </button>
+                </div>
+            </section>
+
+            <!-- Asset Stats -->
+            <section class="asset-stats">
+                <h3>Статистика</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Рыночная капитализация</div>
+                        <div class="stat-value" id="marketCap">$850.2B</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Объем (24ч)</div>
+                        <div class="stat-value" id="volume24h">$28.5B</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Максимум (24ч)</div>
+                        <div class="stat-value" id="high24h">$43,580</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Минимум (24ч)</div>
+                        <div class="stat-value" id="low24h">$42,100</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" data-page="coins">
+                <i class="fas fa-coins"></i>
+                <span>Монеты</span>
+            </button>
+            <button class="nav-btn" data-page="portfolio">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+            <button class="nav-btn" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="exchange-api.js"></script>
+    <script>
+        let currentAsset = null;
+        let currentPrice = 0;
+        let userBalance = { USD: 0 };
+        let priceChart = null;
+        let currentPeriod = '1D';
+
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            // Проверяем авторизацию
+            if (!window.exchangeAPI.isAuthenticated()) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Получаем параметры из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const assetId = urlParams.get('asset');
+            
+            if (!assetId) {
+                showToast('Ошибка', 'Актив не указан', 'error');
+                return;
+            }
+
+            initializePage(assetId);
+            initializeTradingTabs();
+            initializeNavigation();
+            initializeChartControls();
+            applyTheme();
+        });
+
+        async function initializePage(assetId) {
+            try {
+                // Загружаем данные актива
+                currentAsset = await window.exchangeAPI.getCoin(assetId);
+                currentPrice = currentAsset.price;
+                
+                // Загружаем баланс пользователя из API
+                userBalance = await window.exchangeAPI.getBalance();
+                
+                // Обновляем интерфейс
+                updateAssetInfo();
+                updateTradingForms();
+                loadPriceHistory();
+                
+                // Обновляем цены каждые 5 секунд
+                setInterval(updatePrices, 5000);
+                
+                // Обновляем график каждые 30 секунд
+                setInterval(() => {
+                    if (priceChart) {
+                        loadPriceHistory();
+                    }
+                }, 30000);
+                
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                showToast('Ошибка', 'Не удалось загрузить данные актива', 'error');
+            }
+        }
+
+        function updateAssetInfo() {
+            if (!currentAsset) return;
+
+            // Обновляем заголовок
+            document.getElementById('assetName').textContent = currentAsset.name;
+            document.getElementById('assetNameDisplay').textContent = currentAsset.name;
+            document.getElementById('assetSymbol').textContent = currentAsset.symbol;
+            
+            // Обновляем иконку
+            const icon = window.exchangeAPI.getCoinIcon(currentAsset.symbol);
+            const color = window.exchangeAPI.getCoinColor(currentAsset.symbol);
+            const iconElement = document.getElementById('assetIcon');
+            iconElement.innerHTML = `<i class="${icon}"></i>`;
+            iconElement.style.background = color;
+            
+            // Обновляем цену
+            document.getElementById('currentPrice').textContent = window.exchangeAPI.formatCurrency(currentAsset.price);
+            
+            // Обновляем изменение цены
+            const changeElement = document.getElementById('priceChange');
+            changeElement.textContent = window.exchangeAPI.formatPercent(currentAsset.priceChange);
+            changeElement.className = `price-change ${currentAsset.priceChange >= 0 ? 'positive' : 'negative'}`;
+            
+            // Обновляем статистику
+            document.getElementById('marketCap').textContent = window.exchangeAPI.formatCurrency(currentAsset.marketCap);
+            document.getElementById('volume24h').textContent = window.exchangeAPI.formatCurrency(currentAsset.volume);
+            
+            // Обновляем кнопки торговли
+            const buyBtn = document.querySelector('#buyForm .trade-btn');
+            const sellBtn = document.querySelector('#sellForm .trade-btn');
+            buyBtn.innerHTML = `<i class="fas fa-arrow-up"></i> Купить ${currentAsset.symbol}`;
+            sellBtn.innerHTML = `<i class="fas fa-arrow-down"></i> Продать ${currentAsset.symbol}`;
+        }
+
+        function updateTradingForms() {
+            try {
+                // Обновляем поля ввода
+                const buyAmountInput = document.getElementById('buyAmount');
+                const sellAmountInput = document.getElementById('sellAmount');
+                
+                // Удаляем старые обработчики событий
+                buyAmountInput.removeEventListener('input', updateBuyCalculation);
+                sellAmountInput.removeEventListener('input', updateSellCalculation);
+                
+                // Добавляем новые обработчики событий
+                buyAmountInput.addEventListener('input', updateBuyCalculation);
+                sellAmountInput.addEventListener('input', updateSellCalculation);
+                
+                // Показываем текущий баланс
+                const userBalanceDisplay = userBalance[currentAsset.symbol.toUpperCase()] || 0;
+                sellAmountInput.placeholder = `Максимум: ${window.exchangeAPI.formatCrypto(userBalanceDisplay)}`;
+                buyAmountInput.placeholder = `Доступно: ${window.exchangeAPI.formatCurrency(userBalance.USD)}`;
+                
+                // Показываем информацию о потенциальной прибыли/убытке
+                updateProfitInfo();
+            } catch (error) {
+                console.error('Ошибка обновления форм торговли:', error);
+            }
+        }
+
+        function updateProfitInfo() {
+            // Показываем информацию о потенциальной прибыли/убытке
+            updateBuyCalculation();
+            updateSellCalculation();
+        }
+
+
+
+        function updateBuyCalculation() {
+            const usdAmount = parseFloat(document.getElementById('buyAmount').value) || 0;
+            const commission = usdAmount * 0.0025; // 0.25% комиссия
+            const netAmount = usdAmount - commission;
+            const cryptoAmount = netAmount / currentPrice;
+            
+            document.getElementById('buyCryptoAmount').textContent = 
+                `${window.exchangeAPI.formatCrypto(cryptoAmount)} ${currentAsset.symbol}`;
+            document.getElementById('buyCommission').textContent = 
+                window.exchangeAPI.formatCurrency(commission);
+            
+            // Показываем потенциальную прибыль при росте цены на 10%
+            if (usdAmount > 0) {
+                const potentialPrice = currentPrice * 1.1; // +10%
+                const potentialValue = cryptoAmount * potentialPrice;
+                const potentialProfit = potentialValue - usdAmount;
+                const profitPercent = (potentialProfit / usdAmount) * 100;
+                
+                const profitInfo = document.getElementById('buyProfitInfo');
+                profitInfo.innerHTML = `
+                    <div class="profit-preview">
+                        <span class="profit-label">При росте цены на 10%:</span>
+                        <span class="profit-value positive">+${window.exchangeAPI.formatCurrency(potentialProfit)} (${profitPercent.toFixed(2)}%)</span>
+                    </div>
+                `;
+            } else {
+                document.getElementById('buyProfitInfo').innerHTML = '';
+            }
+        }
+
+        function updateSellCalculation() {
+            const cryptoAmount = parseFloat(document.getElementById('sellAmount').value) || 0;
+            const usdValue = cryptoAmount * currentPrice;
+            const commission = usdValue * 0.0025; // 0.25% комиссия
+            const netUsdValue = usdValue - commission;
+            
+            document.getElementById('sellUsdAmount').textContent = 
+                window.exchangeAPI.formatCurrency(netUsdValue);
+            document.getElementById('sellCommission').textContent = 
+                window.exchangeAPI.formatCurrency(commission);
+            
+            // Показываем потенциальную прибыль/убыток при изменении цены
+            if (cryptoAmount > 0) {
+                // Показываем потенциальную прибыль при росте цены на 5%
+                const potentialPrice = currentPrice * 1.05; // +5%
+                const potentialProfit = (potentialPrice - currentPrice) * cryptoAmount;
+                const potentialProfitPercent = ((potentialPrice - currentPrice) / currentPrice) * 100;
+                
+                const profitInfo = document.getElementById('sellProfitInfo');
+                profitInfo.innerHTML = `
+                    <div class="profit-preview">
+                        <span class="profit-label">При росте цены на 5%:</span>
+                        <span class="profit-value positive">
+                            +${window.exchangeAPI.formatCurrency(potentialProfit)} (${potentialProfitPercent.toFixed(2)}%)
+                        </span>
+                    </div>
+                `;
+            } else {
+                document.getElementById('sellProfitInfo').innerHTML = '';
+            }
+        }
+
+        async function executeBuy() {
+            const usdAmount = parseFloat(document.getElementById('buyAmount').value);
+            
+            if (!usdAmount || usdAmount < 1) {
+                showToast('Ошибка', 'Минимальная сумма покупки: $1', 'error');
+                return;
+            }
+            
+            if (usdAmount > userBalance.USD) {
+                showToast('Ошибка', 'Недостаточно средств', 'error');
+                return;
+            }
+            
+            try {
+                // Показываем индикатор загрузки
+                const buyBtn = document.querySelector('#buyForm .trade-btn');
+                const originalText = buyBtn.innerHTML;
+                buyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выполняется...';
+                buyBtn.disabled = true;
+                
+                // Выполняем покупку через API
+                const result = await window.exchangeAPI.buyAsset(currentAsset.id, usdAmount);
+                
+                if (result.success) {
+                    // Обновляем баланс из ответа API
+                    userBalance = result.newBalance;
+                    
+                    showToast('Успех', `Куплено ${window.exchangeAPI.formatCrypto(result.transaction.amount)} ${currentAsset.symbol} за ${window.exchangeAPI.formatCurrency(usdAmount)}`, 'success');
+                    
+                    // Очищаем форму
+                    document.getElementById('buyAmount').value = '';
+                    updateBuyCalculation();
+                    
+                    // Обновляем отображение баланса
+                    updateBalanceDisplay();
+                } else {
+                    showToast('Ошибка', result.errors?.join(', ') || 'Не удалось выполнить покупку', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка покупки:', error);
+                showToast('Ошибка', error.message || 'Не удалось выполнить покупку', 'error');
+            } finally {
+                // Восстанавливаем кнопку
+                const buyBtn = document.querySelector('#buyForm .trade-btn');
+                buyBtn.innerHTML = originalText;
+                buyBtn.disabled = false;
+            }
+        }
+
+        async function executeSell() {
+            const cryptoAmount = parseFloat(document.getElementById('sellAmount').value);
+            const userBalanceDisplay = userBalance[currentAsset.symbol.toUpperCase()] || 0;
+            
+            if (!cryptoAmount || cryptoAmount <= 0) {
+                showToast('Ошибка', 'Введите количество для продажи', 'error');
+                return;
+            }
+            
+            if (cryptoAmount > userBalanceDisplay) {
+                showToast('Ошибка', 'Недостаточно активов для продажи', 'error');
+                return;
+            }
+            
+            try {
+                // Показываем индикатор загрузки
+                const sellBtn = document.querySelector('#sellForm .trade-btn');
+                const originalText = sellBtn.innerHTML;
+                sellBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выполняется...';
+                sellBtn.disabled = true;
+                
+                // Выполняем продажу через API
+                const result = await window.exchangeAPI.sellAsset(currentAsset.id, cryptoAmount);
+                
+                if (result.success) {
+                    // Обновляем баланс из ответа API
+                    userBalance = result.newBalance;
+                    
+                    showToast('Успех', `Продано ${window.exchangeAPI.formatCrypto(cryptoAmount)} ${currentAsset.symbol} за ${window.exchangeAPI.formatCurrency(result.transaction.usdAmount)}`, 'success');
+                    
+                    // Очищаем форму
+                    document.getElementById('sellAmount').value = '';
+                    updateSellCalculation();
+                    
+                    // Обновляем отображение баланса
+                    updateBalanceDisplay();
+                } else {
+                    showToast('Ошибка', result.errors?.join(', ') || 'Не удалось выполнить продажу', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка продажи:', error);
+                showToast('Ошибка', error.message || 'Не удалось выполнить продажу', 'error');
+            } finally {
+                // Восстанавливаем кнопку
+                const sellBtn = document.querySelector('#sellForm .trade-btn');
+                sellBtn.innerHTML = originalText;
+                sellBtn.disabled = false;
+            }
+        }
+
+        function initializeTradingTabs() {
+            const tabs = document.querySelectorAll('.trading-tab');
+            const forms = document.querySelectorAll('.trading-form');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.dataset.tab;
+                    
+                    // Обновляем активную вкладку
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Показываем соответствующую форму
+                    forms.forEach(form => {
+                        form.classList.add('hidden');
+                        if (form.id === `${targetTab}Form`) {
+                            form.classList.remove('hidden');
+                        }
+                    });
+                });
+            });
+        }
+
+        function initializeNavigation() {
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const page = button.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+        function initializeChartControls() {
+            // Устанавливаем период по умолчанию (24 часа)
+            currentPeriod = '1D';
+        }
+
+        function navigateToPage(page) {
+            if (page === 'home') {
+                window.location.href = 'index.html';
+            } else if (page === 'coins') {
+                window.location.href = 'coins.html';
+            } else if (page === 'portfolio') {
+                window.location.href = 'portfolio.html';
+            } else if (page === 'settings') {
+                window.location.href = 'settings.html';
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        function toggleFavorite() {
+            const icon = document.getElementById('favoriteIcon');
+            icon.classList.toggle('fas');
+            icon.classList.toggle('far');
+            
+            if (icon.classList.contains('fas')) {
+                showToast('Добавлено', 'Актив добавлен в избранное', 'success');
+            } else {
+                showToast('Удалено', 'Актив удален из избранного', 'info');
+            }
+        }
+
+        function exportChartData() {
+            if (!priceChart || !priceChart.data) {
+                showToast('Ошибка', 'Нет данных для экспорта', 'error');
+                return;
+            }
+
+            const data = priceChart.data.datasets[0].data;
+            const labels = priceChart.data.labels;
+            
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            csvContent += 'Время,Цена\n';
+            
+            for (let i = 0; i < data.length; i++) {
+                if (labels[i]) { // Только строки с метками времени
+                    csvContent += `${labels[i]},${data[i]}\n`;
+                }
+            }
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `${currentAsset.symbol}_price_history.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('Успех', 'Данные экспортированы', 'success');
+        }
+
+        async function testSystem() {
+            try {
+                const result = await window.exchangeAPI.getTestStatus();
+                console.log('Test Status:', result);
+                
+                let message = 'Тест системы:\n';
+                message += `Пользователь: ${result.user.username}\n`;
+                message += `Баланс USD: $${result.account?.balance?.USD || 0}\n`;
+                message += `Транзакций: ${result.transactions?.length || 0}\n`;
+                message += `Активов в портфеле: ${Object.keys(result.portfolio?.assets || {}).length}\n`;
+                
+                showToast('Тест системы', message, 'info');
+            } catch (error) {
+                console.error('Test error:', error);
+                showToast('Ошибка теста', error.message, 'error');
+            }
+        }
+
+        async function loadPriceHistory() {
+            // Показываем индикатор загрузки
+            const chartContainer = document.getElementById('priceChart');
+            chartContainer.innerHTML = `
+                <div class="chart-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Загрузка графика...</p>
+                </div>
+            `;
+            
+            try {
+                // Устанавливаем период 24 часа
+                const limit = 48; // Больше точек для плавности
+                const now = new Date();
+                const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+                const endDate = now.toISOString();
+                
+                // Обновляем подзаголовок
+                document.getElementById('chartSubtitle').textContent = 'Последние 24 часа';
+                
+                const priceHistory = await window.exchangeAPI.getCoinPriceHistory(currentAsset.id, limit, startDate, endDate);
+                
+                if (priceHistory && priceHistory.length > 0) {
+                    renderPriceChart(priceHistory);
+                } else {
+                    // Если нет данных, показываем заглушку
+                    const chartContainer = document.getElementById('priceChart');
+                    chartContainer.innerHTML = `
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-line"></i>
+                            <p>Нет данных для отображения</p>
+                            <small>Попробуйте другой период времени</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки истории цен:', error);
+                const chartContainer = document.getElementById('priceChart');
+                chartContainer.innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Ошибка загрузки графика</p>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPriceChart(priceHistory) {
+            const chartContainer = document.getElementById('priceChart');
+            
+            // Очищаем контейнер
+            chartContainer.innerHTML = '<canvas id="priceChartCanvas"></canvas>';
+            
+            // Подготавливаем данные для графика
+            const labels = [];
+            const prices = [];
+            const volumes = [];
+            
+            // Сортируем данные по времени (от старых к новым)
+            const sortedHistory = priceHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            sortedHistory.forEach((point, index) => {
+                const date = new Date(point.timestamp);
+                
+                // Форматируем метки времени для 24-часового периода
+                const label = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                
+                // Добавляем метку только для каждого N-го элемента, чтобы избежать переполнения
+                if (index % Math.max(1, Math.floor(sortedHistory.length / 10)) === 0) {
+                    labels.push(label);
+                } else {
+                    labels.push('');
+                }
+                
+                prices.push(point.price);
+                volumes.push(point.volume || 0);
+            });
+            
+            // Получаем цвет актива
+            const assetColor = window.exchangeAPI.getCoinColor(currentAsset.symbol);
+            
+            // Создаем градиент для графика
+            const ctx = document.getElementById('priceChartCanvas').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, assetColor + '40');
+            gradient.addColorStop(1, assetColor + '10');
+            
+            // Уничтожаем предыдущий график, если он существует
+            if (priceChart) {
+                priceChart.destroy();
+            }
+            
+            // Создаем новый график
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Цена',
+                        data: prices,
+                        borderColor: assetColor,
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.6,
+                        pointBackgroundColor: assetColor,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: assetColor,
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 26, 26, 0.95)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: assetColor,
+                            borderWidth: 2,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: '600'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                title: function(context) {
+                                    const index = context[0].dataIndex;
+                                    const point = sortedHistory[index];
+                                    if (point) {
+                                        return new Date(point.timestamp).toLocaleString('ru-RU', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
+                                    }
+                                    return context[0].label;
+                                },
+                                label: function(context) {
+                                    return `Цена: ${window.exchangeAPI.formatCurrency(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#8e8e93',
+                                font: {
+                                    size: 13,
+                                    weight: '500'
+                                },
+                                maxTicksLimit: 8,
+                                padding: 8
+                            },
+                            border: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(44, 44, 46, 0.3)',
+                                drawBorder: false,
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: '#8e8e93',
+                                font: {
+                                    size: 13,
+                                    weight: '500'
+                                },
+                                padding: 8,
+                                callback: function(value) {
+                                    return window.exchangeAPI.formatCurrency(value);
+                                }
+                            },
+                            border: {
+                                display: false
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverRadius: 8,
+                            hoverBorderWidth: 4
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        async function updatePrices() {
+            try {
+                const updatedAsset = await window.exchangeAPI.getCoin(currentAsset.id);
+                currentPrice = updatedAsset.price;
+                currentAsset = updatedAsset; // Обновляем весь объект актива
+                
+                // Обновляем отображение цены
+                document.getElementById('currentPrice').textContent = window.exchangeAPI.formatCurrency(currentAsset.price);
+                
+                const changeElement = document.getElementById('priceChange');
+                changeElement.textContent = window.exchangeAPI.formatPercent(currentAsset.priceChange);
+                changeElement.className = `price-change ${currentAsset.priceChange >= 0 ? 'positive' : 'negative'}`;
+                
+                // Обновляем расчеты в формах
+                updateBuyCalculation();
+                updateSellCalculation();
+                
+                // Обновляем последнюю точку на графике, если он существует
+                if (priceChart && priceChart.data.datasets[0].data.length > 0) {
+                    const lastIndex = priceChart.data.datasets[0].data.length - 1;
+                    priceChart.data.datasets[0].data[lastIndex] = currentAsset.price;
+                    priceChart.update('none'); // Обновляем без анимации для плавности
+                }
+                
+            } catch (error) {
+                console.error('Ошибка обновления цен:', error);
+            }
+        }
+
+        // Функция для обновления отображения баланса
+        function updateBalanceDisplay() {
+            try {
+                // Обновляем информацию о доступном балансе в формах
+                const userBalanceDisplay = userBalance[currentAsset.symbol.toUpperCase()] || 0;
+                const sellAmountInput = document.getElementById('sellAmount');
+                sellAmountInput.placeholder = `Максимум: ${window.exchangeAPI.formatCrypto(userBalanceDisplay)}`;
+                
+                // Обновляем отображение USD баланса в форме покупки
+                const buyAmountInput = document.getElementById('buyAmount');
+                buyAmountInput.placeholder = `Доступно: ${window.exchangeAPI.formatCurrency(userBalance.USD)}`;
+            } catch (error) {
+                console.error('Ошибка обновления баланса:', error);
+            }
+        }
+
+
+
+        // Функция для показа уведомлений
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>${title}</strong>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Автоматическое удаление через 5 секунд
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+        // Функция применения темы
+        function applyTheme() {
+            const settings = JSON.parse(localStorage.getItem('userSettings')) || { theme: true };
+            const body = document.body;
+            
+            if (settings.theme) {
+                // Темная тема
+                body.classList.add('dark-theme');
+                body.classList.remove('light-theme');
+            } else {
+                // Светлая тема
+                body.classList.add('light-theme');
+                body.classList.remove('dark-theme');
+            }
+        }
+    </script>
+</body>
+
+</html> 

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>SaleBit - Криптобиржа</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-coins"></i>
+                <span>SaleBit</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Login Form -->
+            <div class="form-container" id="login-form">
+                <div class="form-header">
+                    <h1>Вход</h1>
+                    <p>Войдите в свой аккаунт</p>
+                </div>
+                
+                <form class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email или имя пользователя</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope"></i>
+                            <input type="text" id="loginEmail" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginPassword">Пароль</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" name="password" required>
+                            <button type="button" class="password-toggle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <span>Войти</span>
+                    </button>
+                </form>
+                
+                <div class="form-footer">
+                    <p>Нет аккаунта? <a href="#" class="switch-form" data-target="register">Создать аккаунт</a></p>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <div class="form-container hidden" id="register-form">
+                <div class="form-header">
+                    <h1>Регистрация</h1>
+                    <p>Создайте новый аккаунт</p>
+                </div>
+                
+                <form class="auth-form" id="registerForm">
+                    
+                    <div class="form-group">
+                        <label for="username">Имя пользователя</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-at"></i>
+                            <input type="text" id="username" name="username" required>
+                            <div class="validation-indicator" id="usernameIndicator"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="registerEmail" name="email" required>
+                            <div class="validation-indicator" id="emailIndicator"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerPassword">Пароль</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="registerPassword" name="password" required>
+                            <button type="button" class="password-toggle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength" id="passwordStrength"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Подтвердите пароль</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required>
+                            <button type="button" class="password-toggle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <span>Создать аккаунт</span>
+                    </button>
+                </form>
+                
+                <div class="form-footer">
+                    <p>Уже есть аккаунт? <a href="#" class="switch-form" data-target="login">Войти в аккаунт</a></p>
+                </div>
+            </div>
+
+            <!-- Dashboard (hidden by default) -->
+            <div class="dashboard hidden" id="dashboard">
+                <div class="dashboard-header">
+                    <h1>Добро пожаловать, <span id="userName"></span>!</h1>
+                    <button class="btn btn-secondary" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Выйти
+                    </button>
+                </div>
+                
+                <div class="dashboard-content">
+                    <div class="balance-card">
+                        <h3>Баланс аккаунта</h3>
+                        <div class="balance-grid">
+                            <div class="balance-item">
+                                <div class="balance-icon usd">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="balance-info">
+                                    <span class="balance-label">USD</span>
+                                    <span class="balance-amount" id="usdBalance">$0.00</span>
+                                </div>
+                            </div>
+                            <div class="balance-item">
+                                <div class="balance-icon btc">
+                                    <i class="fab fa-bitcoin"></i>
+                                </div>
+                                <div class="balance-info">
+                                    <span class="balance-label">Bitcoin</span>
+                                    <span class="balance-amount" id="btcBalance">0.00000000</span>
+                                </div>
+                            </div>
+                            <div class="balance-item">
+                                <div class="balance-icon eth">
+                                    <i class="fab fa-ethereum"></i>
+                                </div>
+                                <div class="balance-info">
+                                    <span class="balance-label">Ethereum</span>
+                                    <span class="balance-amount" id="ethBalance">0.00000000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h4>Торговля</h4>
+                            <p>Начните торговать криптовалютами</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <h4>Кошелек</h4>
+                            <p>Управляйте своими активами</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <h4>История</h4>
+                            <p>Просматривайте транзакции</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-cog"></i>
+                            </div>
+                            <h4>Настройки</h4>
+                            <p>Настройте свой аккаунт</p>
+                        </div>
+                        <div class="feature-card" onclick="window.location.href='/coin.html'">
+                            <div class="feature-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h4>Управление монетами</h4>
+                            <p>Добавляйте и управляйте криптовалютами</p>
+                        </div>
+                        <div class="feature-card" onclick="window.location.href='/User.html'" id="userManagementCard" style="display: none;">
+                            <div class="feature-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h4>Управление пользователями</h4>
+                            <p>Управляйте клиентами и их статусами</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay hidden" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+        </div>
+
+        <!-- Notification Container -->
+        <div class="notification-container" id="notificationContainer"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

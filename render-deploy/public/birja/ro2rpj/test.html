@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест исправлений - KriptoExchange</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="app-title">Тест исправлений</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="runTests()">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Test Results -->
+            <section class="test-results">
+                <div class="section-header">
+                    <h2>Результаты тестирования</h2>
+                </div>
+                <div id="testResults" class="test-results-content">
+                    <div class="test-item">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Запуск тестов...</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Layout Test -->
+            <section class="layout-test">
+                <div class="section-header">
+                    <h2>Тест верстки</h2>
+                </div>
+                <div class="test-card">
+                    <h3>Проверка контейнеров</h3>
+                    <div class="test-info">
+                        <p>Ширина экрана: <span id="screenWidth">-</span>px</p>
+                        <p>Ширина контейнера: <span id="containerWidth">-</span>px</p>
+                        <p>Высота контента: <span id="contentHeight">-</span>px</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Responsive Test -->
+            <section class="responsive-test">
+                <div class="section-header">
+                    <h2>Тест адаптивности</h2>
+                </div>
+                <div class="analytics-content">
+                    <div class="analytics-row">
+                        <div class="analytics-metric">
+                            <div class="metric-label">Тест 1</div>
+                            <div class="metric-value">100%</div>
+                            <div class="metric-period">Успешно</div>
+                        </div>
+                        <div class="analytics-metric">
+                            <div class="metric-label">Тест 2</div>
+                            <div class="metric-value">100%</div>
+                            <div class="metric-period">Успешно</div>
+                        </div>
+                        <div class="analytics-metric">
+                            <div class="metric-label">Тест 3</div>
+                            <div class="metric-value">100%</div>
+                            <div class="metric-period">Успешно</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chart Test -->
+            <section class="chart-test">
+                <div class="section-header">
+                    <h2>Тест графиков</h2>
+                </div>
+                <div class="allocation-chart">
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-pie"></i>
+                        <p>График работает корректно</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" onclick="window.location.href='index.html'">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" onclick="window.location.href='assets.html'">
+                <i class="fas fa-coins"></i>
+                <span>Активы</span>
+            </button>
+            <button class="nav-btn" onclick="window.location.href='portfolio.html'">
+                <i class="fas fa-briefcase"></i>
+                <span>Портфель</span>
+            </button>
+            <button class="nav-btn" onclick="window.location.href='settings.html'">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+    <script>
+        function runTests() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '';
+            
+            const tests = [
+                { name: 'Проверка контейнера', test: testContainer },
+                { name: 'Проверка адаптивности', test: testResponsive },
+                { name: 'Проверка графиков', test: testCharts },
+                { name: 'Проверка JavaScript', test: testJavaScript }
+            ];
+            
+            tests.forEach((test, index) => {
+                setTimeout(() => {
+                    const result = test.test();
+                    const testItem = document.createElement('div');
+                    testItem.className = 'test-item';
+                    testItem.innerHTML = `
+                        <i class="fas ${result.success ? 'fa-check' : 'fa-times'}" style="color: ${result.success ? '#30d158' : '#ff453a'}"></i>
+                        <span>${test.name}: ${result.message}</span>
+                    `;
+                    results.appendChild(testItem);
+                }, index * 500);
+            });
+            
+            updateLayoutInfo();
+        }
+        
+        function testContainer() {
+            const container = document.querySelector('.app-container');
+            const isVisible = container && container.offsetWidth > 0;
+            return {
+                success: isVisible,
+                message: isVisible ? 'Контейнер отображается корректно' : 'Проблема с контейнером'
+            };
+        }
+        
+        function testResponsive() {
+            const analyticsRow = document.querySelector('.analytics-row');
+            const isFlexible = analyticsRow && window.getComputedStyle(analyticsRow).display === 'flex';
+            return {
+                success: isFlexible,
+                message: isFlexible ? 'Адаптивность работает' : 'Проблема с адаптивностью'
+            };
+        }
+        
+        function testCharts() {
+            const chartContainer = document.querySelector('.allocation-chart');
+            const isVisible = chartContainer && chartContainer.offsetHeight > 0;
+            return {
+                success: isVisible,
+                message: isVisible ? 'Графики отображаются' : 'Проблема с графиками'
+            };
+        }
+        
+        function testJavaScript() {
+            try {
+                // Проверяем основные функции
+                if (typeof showToast === 'function' && typeof formatCurrency === 'function') {
+                    return {
+                        success: true,
+                        message: 'JavaScript работает корректно'
+                    };
+                } else {
+                    return {
+                        success: false,
+                        message: 'Проблема с JavaScript функциями'
+                    };
+                }
+            } catch (error) {
+                return {
+                    success: false,
+                    message: 'Ошибка в JavaScript: ' + error.message
+                };
+            }
+        }
+        
+        function updateLayoutInfo() {
+            document.getElementById('screenWidth').textContent = window.innerWidth;
+            document.getElementById('containerWidth').textContent = document.querySelector('.app-container').offsetWidth;
+            document.getElementById('contentHeight').textContent = document.querySelector('.main-content').offsetHeight;
+        }
+        
+        // Автоматический запуск тестов при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(runTests, 1000);
+            updateLayoutInfo();
+            
+            // Обновляем информацию при изменении размера окна
+            window.addEventListener('resize', updateLayoutInfo);
+        });
+    </script>
+    
+    <style>
+        .test-results-content {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #2c2c2e;
+        }
+        
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        
+        .test-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-info p {
+            margin: 8px 0;
+            color: #8e8e93;
+        }
+        
+        .test-info span {
+            color: #ffffff;
+            font-weight: 600;
+        }
+    </style>
+</body>
+</html> 

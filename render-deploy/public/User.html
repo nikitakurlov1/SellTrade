@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пользователи - Управление клиентами | SaleBit</title>
+    <link rel="stylesheet" href="User.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-coins"></i>
+                    <span>SaleBit</span>
+                </div>
+                <nav class="nav-menu">
+                    <a href="/Home.html" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        <span>Главная</span>
+                    </a>
+                    <a href="/coin.html" class="nav-link">
+                        <i class="fas fa-coins"></i>
+                        <span>Монеты</span>
+                    </a>
+                    <a href="/User.html" class="nav-link active">
+                        <i class="fas fa-users"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span id="currentUser">Пользователь</span>
+                    <button class="btn btn-secondary" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Управление пользователями</h1>
+                    <p>Управляйте клиентами биржи и их статусами</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" id="refreshUsersBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Обновить</span>
+                    </button>
+                    <button class="btn btn-primary" id="addUserBtn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Добавить пользователя</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="totalUsers">0</span>
+                        <span class="stat-label">Всего пользователей</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="activeUsers">0</span>
+                        <span class="stat-label">Активные</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="pendingUsers">0</span>
+                        <span class="stat-label">Ожидающие</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="rejectedUsers">0</span>
+                        <span class="stat-label">Отклоненные</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="filters-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Поиск пользователей...">
+                </div>
+                <div class="filters">
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">Все статусы</option>
+                        <option value="active">Активные</option>
+                        <option value="pending">Ожидающие</option>
+                        <option value="rejected">Отклоненные</option>
+                        <option value="processing">В проработке</option>
+                    </select>
+                    <select id="sortFilter" class="filter-select">
+                        <option value="createdAt">По дате регистрации</option>
+                        <option value="username">По имени пользователя</option>
+                        <option value="email">По email</option>
+                        <option value="status">По статусу</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-container">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll">
+                            </th>
+                            <th>Пользователь</th>
+                            <th>Email</th>
+                            <th>Дата регистрации</th>
+                            <th>Статус</th>
+                            <th>Баланс USD</th>
+                            <th>Последний вход</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <button class="pagination-btn" id="prevPage">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="page-numbers" id="pageNumbers">
+                    <span class="page-number active">1</span>
+                </div>
+                <button class="pagination-btn" id="nextPage">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- Add User Modal -->
+        <div class="modal" id="addUserModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Добавить нового пользователя</h2>
+                    <button class="modal-close" id="closeModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="addUserForm" class="modal-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userUsername">Имя пользователя</label>
+                            <input type="text" id="userUsername" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userEmail">Email</label>
+                            <input type="email" id="userEmail" name="email" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userPassword">Пароль</label>
+                            <input type="password" id="userPassword" name="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userStatus">Статус</label>
+                            <select id="userStatus" name="status" required>
+                                <option value="active">Активный</option>
+                                <option value="pending">Ожидающий</option>
+                                <option value="rejected">Отклоненный</option>
+                                <option value="processing">В проработке</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="userNotes">Заметки</label>
+                        <textarea id="userNotes" name="notes" rows="3" placeholder="Дополнительная информация о пользователе"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelAdd">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Добавить пользователя</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div class="modal" id="editUserModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Редактировать пользователя</h2>
+                    <button class="modal-close" id="closeEditModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="editUserForm" class="modal-form">
+                    <input type="hidden" id="editUserId" name="id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editUserUsername">Имя пользователя</label>
+                            <input type="text" id="editUserUsername" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editUserEmail">Email</label>
+                            <input type="email" id="editUserEmail" name="email" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editUserStatus">Статус</label>
+                            <select id="editUserStatus" name="status" required>
+                                <option value="active">Активный</option>
+                                <option value="pending">Ожидающий</option>
+                                <option value="rejected">Отклоненный</option>
+                                <option value="processing">В проработке</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editUserBalance">Баланс USD</label>
+                            <input type="number" id="editUserBalance" name="balance" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editUserNotes">Заметки</label>
+                        <textarea id="editUserNotes" name="notes" rows="3" placeholder="Дополнительная информация о пользователе"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEdit">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay hidden" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+        </div>
+
+        <!-- Notification Container -->
+        <div class="notification-container" id="notificationContainer"></div>
+    </div>
+
+    <script src="User.js"></script>
+</body>
+</html>
