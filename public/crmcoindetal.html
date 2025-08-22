@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детали монеты | SaleBit</title>
+    <link rel="stylesheet" href="crmcoindetal.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-coins"></i>
+                    <span>SaleBit</span>
+                </div>
+                <nav class="breadcrumb">
+                    <a href="/coin.html" class="breadcrumb-link">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Назад к монетам</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span id="currentUser">Пользователь</span>
+                    <button class="btn btn-secondary" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Coin Header -->
+            <div class="coin-header">
+                <div class="coin-info">
+                    <div class="coin-icon" id="coinIcon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="coin-details">
+                        <h1 id="coinName">Bitcoin</h1>
+                        <p id="coinSymbol">BTC</p>
+                        <span class="coin-category" id="coinCategory">Infrastructure</span>
+                    </div>
+                </div>
+                <div class="coin-price-info">
+                    <div class="current-price">
+                        <span class="price-label">Текущая цена</span>
+                        <span class="price-value" id="currentPrice">$0.00</span>
+                        <span class="price-change" id="priceChange">0.00%</span>
+                    </div>
+                    <div class="price-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Рыночная капитализация</span>
+                            <span class="stat-value" id="marketCap">$0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Объем 24ч</span>
+                            <span class="stat-value" id="volume24h">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+                <!-- Chart Section -->
+                <div class="chart-section">
+                    <div class="section-header">
+                        <h2>График цены за 24 часа</h2>
+                        <div class="chart-controls">
+                            <button class="btn btn-secondary" id="refreshChartBtn">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Обновить</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Coin Information -->
+                <div class="info-section">
+                    <div class="section-header">
+                        <h2>Информация о монете</h2>
+                        <button class="btn btn-primary" id="editInfoBtn">
+                            <i class="fas fa-edit"></i>
+                            <span>Редактировать</span>
+                        </button>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-item">
+                            <span class="info-label">Название</span>
+                            <span class="info-value" id="infoName">Bitcoin</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Символ</span>
+                            <span class="info-value" id="infoSymbol">BTC</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Категория</span>
+                            <span class="info-value" id="infoCategory">Infrastructure</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Статус</span>
+                            <span class="info-value" id="infoStatus">Активная</span>
+                        </div>
+                        <div class="info-item full-width">
+                            <span class="info-label">Описание</span>
+                            <p class="info-description" id="infoDescription">
+                                Первая и самая популярная криптовалюта в мире.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Section -->
+                <div class="simulation-section">
+                    <div class="section-header">
+                        <h2>Симуляция цены</h2>
+                    </div>
+                    <div class="simulation-content">
+                        <form id="simulationForm" class="simulation-form">
+                            <div class="form-group">
+                                <label for="targetPrice">Целевая цена (USD)</label>
+                                <input type="number" id="targetPrice" name="targetPrice" step="0.000001" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="simulationType">Тип симуляции</label>
+                                <select id="simulationType" name="simulationType" required>
+                                    <option value="time">По времени (минуты)</option>
+                                    <option value="date">По дате</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" id="timeInputGroup">
+                                <label for="timeMinutes">Время в минутах</label>
+                                <input type="number" id="timeMinutes" name="timeMinutes" min="1" max="10080" placeholder="1-10080">
+                            </div>
+                            
+                            <div class="form-group hidden" id="dateInputGroup">
+                                <label for="targetDate">Целевая дата</label>
+                                <input type="datetime-local" id="targetDate" name="targetDate">
+                            </div>
+                            
+                            <div class="simulation-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-play"></i>
+                                    <span>Запустить симуляцию</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="resetSimulation">
+                                    <i class="fas fa-undo"></i>
+                                    <span>Сбросить</span>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="simulation-results hidden" id="simulationResults">
+                            <h3>Результаты симуляции</h3>
+                            <div class="result-item">
+                                <span class="result-label">Текущая цена:</span>
+                                <span class="result-value" id="resultCurrentPrice">$0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Целевая цена:</span>
+                                <span class="result-value" id="resultTargetPrice">$0.00</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Изменение:</span>
+                                <span class="result-value" id="resultChange">0.00%</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Время достижения:</span>
+                                <span class="result-value" id="resultTime">-</span>
+                            </div>
+                            <div class="simulation-actions">
+                                <button type="button" class="btn btn-danger" id="stopSimulation">
+                                    <i class="fas fa-stop"></i>
+                                    <span>Остановить симуляцию</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Edit Info Modal -->
+        <div class="modal" id="editInfoModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Редактировать информацию о монете</h2>
+                    <button class="modal-close" id="closeEditModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="editInfoForm" class="modal-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editName">Название монеты</label>
+                            <input type="text" id="editName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editSymbol">Символ</label>
+                            <input type="text" id="editSymbol" name="symbol" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editCategory">Категория</label>
+                            <select id="editCategory" name="category" required>
+                                <option value="defi">DeFi</option>
+                                <option value="gaming">Gaming</option>
+                                <option value="infrastructure">Инфраструктура</option>
+                                <option value="meme">Meme</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editStatus">Статус</label>
+                            <select id="editStatus" name="status" required>
+                                <option value="active">Активная</option>
+                                <option value="inactive">Неактивная</option>
+                                <option value="pending">Ожидающая</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDescription">Описание</label>
+                        <textarea id="editDescription" name="description" rows="4"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEdit">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay hidden" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+        </div>
+
+        <!-- Notification Container -->
+        <div class="notification-container" id="notificationContainer"></div>
+    </div>
+
+    <script src="crmcoindetal.js"></script>
+</body>
+</html>
